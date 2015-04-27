@@ -41,3 +41,10 @@ clean:
 
 docker:
 	docker build -t pesscara/grunt -f grunt.Dockerfile .
+
+slicer:
+	docker build -t pesscara/slicer -f slicer.Dockerfile .
+ants:
+	docker build -t pesscara/ants -f ants.Dockerfile .
+
+.PHONY: ants

@@ -1,0 +1,8 @@
+
+services:
+  - endPoint: slicer
+    commandLine: ["echo", "@Message"]
+    description: print a message
+    defaults:
+      Message: "Hi From Grunt"
+    

@@ -1,0 +1,10 @@
+
+services:
+  - endPoint: echo
+    commandLine: ["echo", "@message"]
+    description: print a message
+    defaults:
+      message: "Hi From Grunt"
+  - endPoint: affine
+    commandLine: ["./simpleReg", "<fixed", "<moving", ">output"]
+    
