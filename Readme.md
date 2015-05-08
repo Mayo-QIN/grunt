@@ -53,3 +53,11 @@ id=`curl --silent -X POST --form in=@big_file.txt --form out=small_file.txt loca
 wget --content-disposition localhost:9901/rest/job/$id/file/out
 ```
 
+
+## Development
+
+These tools are written in the (Go language)[https://golang.org/].
+
+```
+make help
+```

@@ -1,13 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
+	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	graceful "gopkg.in/tylerb/graceful.v1"
 	"gopkg.in/yaml.v2"
 )
 
@@ -19,7 +20,6 @@ type Config struct {
 var config Config
 
 func main() {
-	fmt.Println("Hi from grunt")
 	config.ServiceMap = make(map[string]*Service)
 
 	if len(os.Args) < 2 {
@@ -37,7 +37,6 @@ func main() {
 	for _, service := range config.Services {
 		config.ServiceMap[service.EndPoint] = service
 	}
-	log.Printf("Structure %#v", config)
 
 	// Expose the endpoints
 	r := mux.NewRouter()
@@ -48,5 +47,7 @@ func main() {
 	r.HandleFunc("/rest/job/{id}/file/{filename}", GetJobFile).Methods("GET")
 
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(":9901", nil))
+	// log.Fatal(http.ListenAndServe(":9901", nil))
+	log.Info("Starting grunt on port 9901 (http://localhost:9901)")
+	graceful.Run(":9901", 10*time.Second, nil)
 }
