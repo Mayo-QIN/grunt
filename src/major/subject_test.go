@@ -26,3 +26,15 @@ func TestSubject(t *testing.T) {
 	// fmt.Printf("Id is: %v\n", reflect.Indirect(tt).FieldByName("Id"))
 
 }
+
+func TestBson(t *testing.T) {
+	q := bson.M{"test": "value"}
+	data, _ := bson.Marshal(&q)
+	fmt.Printf("Data %q\n", data)
+
+	buffer := []byte(`{ "tags.modality" : "MR" }`)
+	var query bson.M
+	bson.Unmarshal(buffer, &query)
+	fmt.Printf("Query buffer %v parsed to %v\n", string(buffer), query)
+
+}

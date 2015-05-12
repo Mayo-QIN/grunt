@@ -3,6 +3,9 @@
 Grunt is a Go server and Docker to emulate Sergeant on a small scale.
 
 
+## ToDo
+grunt can not write `.nii.gz` files correctly, comes out at `*.gz` without the `nii` part.
+
 ## Building
 
 make grunt
@@ -61,3 +64,20 @@ These tools are written in the (Go language)[https://golang.org/].
 ```
 make help
 ```
+
+
+## Major
+
+Major is a replacement for TACTIC focused simply on storage and a REST API.
+
+### Usage
+
+```
+env MONGO_PORT_27017_TCP_ADDR=mi3c-contra.mayo.edu MONGO_PORT_27017_TCP_PORT=49182 bin/major 
+```
+
+
+#### Create a subject
+
+```
+curl -v -X POST -d '{ "name" : "djb" }' localhost:9902

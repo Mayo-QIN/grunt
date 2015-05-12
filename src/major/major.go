@@ -38,18 +38,18 @@ func RunMajor(c *cli.Context) {
 
 	// Start the service
 	r := mux.NewRouter()
-	s := r.PathPrefix("/rest").Subrouter()
-	registerSubject(s)
-	http.Handle("/rest/", r)
+	registerSubject(r)
+	http.Handle("/", r)
+	http.HandleFunc("/test", func(w http.ResponseWriter, request *http.Request) {
+		fmt.Fprintf(w, "test\n")
+	})
 
 	log.Info("Starting major on port 9902")
 	hn, err := os.Hostname()
 	log.Infof("http://%v:9902", hn)
 	addresses, err := net.LookupHost(hn)
-	// handle err
 	for _, addr := range addresses {
 		log.Infof("http://%v:9902", addr)
 	}
 	graceful.Run(":9902", 10*time.Second, nil)
-
 }

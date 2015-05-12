@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
@@ -85,7 +86,7 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 			}
 			header := v[0]
 			// Save a temp file
-			fout, err := ioutil.TempFile(dir, header.Filename)
+			fout, err := os.Create(filepath.Join(dir, filepath.Base(header.Filename)))
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -106,7 +107,7 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 				http.Error(w, fmt.Sprintf("filename must be specified for %v", key), http.StatusInternalServerError)
 				return
 			}
-			tmp := filepath.Join(dir, request.MultipartForm.Value[key][0])
+			tmp := filepath.Join(dir, filepath.Base(request.MultipartForm.Value[key][0]))
 			job.FileMap[key] = tmp
 			cl = append(cl, tmp)
 		} else {
