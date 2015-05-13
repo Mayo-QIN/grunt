@@ -1,5 +1,5 @@
 # Key is that we tell go to work here...
-export GOPATH:=$(shell pwd)
+export GOPATH:=$(shell pwd):$(shell pwd)/vendor
 export GOROOT:=$(shell go env GOROOT)
 export PATH:=$(shell pwd)/bin:${PATH}
 
@@ -24,11 +24,11 @@ help:
 
 grunt: bin/grunt
 bin/grunt: vendor fmt
-	bin/gb build grunt
+	gb build grunt
 
 major: bin/major
 bin/major: vendor fmt
-	bin/gb build major
+	gb build major
 
 fmt:
 	go fmt grunt/...
@@ -55,24 +55,19 @@ ants:
 tools: bin/gb
 
 bin/gb:
-	go get -u github.com/constabulary/gb/...
+	go get -u -v github.com/constabulary/gb/...
+	go get -u -v github.com/constabulary/gb-vendor
 
-
-# Get the dependancies, including those for testing (-t)
-vendor: tools
-	bin/gb vendor \
-	github.com/satori/go.uuid \
-	gopkg.in/yaml.v2 \
 # Get the dependancies, including those for testing (-t)
 vendor:
-	bin/gb vendor \
+	gb vendor \
 	github.com/satori/go.uuid \
 	gopkg.in/yaml.v2 \
 	github.com/codegangsta/cli \
-	gopkg.in/tylerb/graceful.v1 \
+	gopkg.in/tylerb/graceful.v1/... \
 	github.com/Sirupsen/logrus \
-	gopkg.in/mgo.v2 \
+	gopkg.in/mgo.v2/... \
 	code.google.com/p/gorest \
-
+	github.com/gorilla/mux \
 
 .PHONY: ants vendor grunt major

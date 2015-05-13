@@ -72,12 +72,31 @@ Major is a replacement for TACTIC focused simply on storage and a REST API.
 
 ### Usage
 
+Start a Docker
+
 ```
-env MONGO_PORT_27017_TCP_ADDR=mi3c-contra.mayo.edu MONGO_PORT_27017_TCP_PORT=49182 bin/major 
+docker run -d -P --name mongo mongo
+docker run -it --link mongo:mongo --rm mongo sh -c 'exec mongo "$MONGO_PORT_27017_TCP_ADDR:$MONGO_PORT_27017_TCP_PORT"'
+```
+
+
+```
+env MONGO_PORT_27017_TCP_ADDR=mi3c-contra.mayo.edu MONGO_PORT_27017_TCP_PORT=49183 bin/major 
 ```
 
 
 #### Create a subject
 
+```bash
+SUBJECT_ID=$(curl -X POST -d '{ "name" : "djb" }' localhost:9902/rest/subject | jq --raw-output .id)
+STUDY_ID=$(curl -X POST -d '{ "name" : "djb", "subject_id": "'$SUBJECT_ID'" }' localhost:9902/rest/study | jq --raw-output .id)
+SERIES_ID=$(curl -X POST -d '{ "name" : "djb", "study_id": "'$STUDY_ID'" }' localhost:9902/rest/series | jq --raw-output .id)
+SNAPSHOT_ID=$(curl -X POST -d '{ "name" : "djb", "series_id": "'$SERIES_ID'" }' localhost:9902/rest/snapshot | jq --raw-output .id)
+
+# Upload a file
+curl -X PUT --data-raw @Readme.md localhost:9902/rest/snapshot/$SNAPSHOT_ID/file
+curl localhost:9902/rest/snapshot/$SNAPSHOT_ID/file
 ```
-curl -v -X POST -d '{ "name" : "djb" }' localhost:9902
+
+Create a Snapshot, and upload a file.
+```

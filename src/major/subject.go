@@ -77,13 +77,15 @@ func registerSubject(r *mux.Router) {
 	})
 
 	r.Path("/rest/snapshot/{id}/file").Methods("POST", "PUT").HandlerFunc(uploadFile)
-	// // r.Path("/rest/snapshot/{id}/file").Methods("GET").HandlerFunc(downloadFile)
+	r.Path("/rest/snapshot/{id}/file").Methods("GET").HandlerFunc(downloadFile)
 
 	r.Path("/rest/{collection}/search").Methods("POST").HandlerFunc(searchSubject)
 	r.Path("/rest/{collection}/{id}").Methods("GET").HandlerFunc(getSubject)
 	r.Path("/rest/{collection}").Methods("POST").HandlerFunc(createSubject)
 	r.Path("/rest/{collection}/{id}").Methods("PUT").HandlerFunc(updateSubject)
 	r.Path("/rest/{collection}/{id}").Methods("DELETE").HandlerFunc(deleteSubject)
+
+	r.Path("/rest/{collection}/{id}/{child}").Methods("GET").HandlerFunc(getRelated)
 
 	log.Info("Registered Subject with the router")
 }
@@ -141,6 +143,48 @@ func getSubject(w http.ResponseWriter, request *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(result)
+}
+
+func getRelated(w http.ResponseWriter, request *http.Request) {
+	log.Info("Get Related")
+	collection := mux.Vars(request)["collection"]
+	key := mux.Vars(request)["id"]
+	child := mux.Vars(request)["child"]
+	relation := collection + "_" + child
+
+	// Get the related children
+	t, ok := TypeMap[relation]
+	if !ok {
+		log.Infof("Could not find type for %v", relation)
+		relation = child
+		log.Infof("Now looking for %v", relation)
+		t, ok = TypeMap[relation]
+	}
+	if !ok {
+		http.Error(w, "could not find proper type", http.StatusInternalServerError)
+		return
+	}
+
+	result := make([]interface{}, 0)
+	c := session.DB(database).C(relation)
+
+	if !bson.IsObjectIdHex(key) {
+		http.Error(w, key+"is not a proper id", http.StatusInternalServerError)
+		return
+	}
+
+	query := bson.M{collection + "_id": bson.ObjectIdHex(key)}
+
+	log.Infof("Looking for %v with query %v", relation, query)
+
+	iter := c.Find(query).Iter()
+	subject := reflect.New(t).Interface()
+	for iter.Next(subject) {
+		result = append(result, subject)
+		subject = reflect.New(t).Interface()
+	}
+
+	json.NewEncoder(w).Encode(bson.M{child: result})
 }
 
 func deleteSubject(w http.ResponseWriter, request *http.Request) {
@@ -205,7 +249,6 @@ func searchSubject(w http.ResponseWriter, request *http.Request) {
 	log.Infof("Query %v", query)
 
 	result := make([]interface{}, 0)
-
 	iter := c.Find(query).Iter()
 	subject := reflect.New(t).Interface()
 	for iter.Next(subject) {
@@ -226,23 +269,57 @@ func uploadFile(w http.ResponseWriter, request *http.Request) {
 	log.Infof("Object: %v / %v", sn, reflect.TypeOf(sn))
 	if snapshot, found := sn.(*Snapshot); found {
 		log.Infof("Uploading a file to %v / %v", snapshot.FileId, snapshot.FileId.Hex())
+
 		// Upload a file
-		var gridFile *mgo.GridFile
 		if snapshot.FileId.Hex() == "" {
-			log.Info("FileId not valid, creating a new file")
-			gridFile, err = gridFS.Create("")
-			snapshot.FileId = gridFile.Id().(bson.ObjectId)
+			snapshot.FileId = bson.NewObjectId()
 			// Save the snapshot
 			c.UpdateId(snapshot.Id, snapshot)
-		} else {
-			log.Info("FileId valid, opening file")
-			gridFile, err = gridFS.OpenId(snapshot.FileId)
 		}
+		gridFile, err := gridFS.Create(snapshot.FileId.Hex())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		log.Info("Writing file")
 		_, err = io.Copy(gridFile, request.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		gridFile.Close()
 		request.Body.Close()
 		json.NewEncoder(w).Encode(snapshot)
+	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+}
+
+func downloadFile(w http.ResponseWriter, request *http.Request) {
+	log.Info("download file")
+	collection := "snapshot"
+	gridFS := session.DB(database).GridFS("fs")
+	key := mux.Vars(request)["id"]
+	sn, err := getObject(collection, key)
+	log.Infof("Object: %v / %v", sn, reflect.TypeOf(sn))
+	if snapshot, found := sn.(*Snapshot); found {
+		log.Infof("Downloading file from %v / %v", snapshot.FileId, snapshot.FileId.Hex())
+		// Upload a file
+		var gridFile *mgo.GridFile
+		if snapshot.FileId.Hex() == "" {
+			http.Error(w, "Could not find file for snapshot", http.StatusInternalServerError)
+			return
+		} else {
+			log.Infof("FileId valid, opening file: %v", snapshot.FileId)
+			gridFile, err = gridFS.Open(snapshot.FileId.Hex())
+		}
+		log.Info("Reading file")
+		_, err = io.Copy(w, gridFile)
+		gridFile.Close()
 	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
