@@ -1,12 +1,10 @@
 # Key is that we tell go to work here...
-export GOPATH:=$(shell pwd):$(shell pwd)/vendor
-export GOROOT:=$(shell go env GOROOT)
-export PATH:=$(shell pwd)/bin:${PATH}
+export GOPATH:=$(shell pwd)
 
 define help
 
 Makefile for grunt
-  all	     - make everything (default)
+  all	     - make everything
   vendor     - find dependancies
   test	     - run tests
   benchmarks - run benchmarks
@@ -22,26 +20,29 @@ export help
 help:
 	@echo "$$help"
 
+all: grunt major
+
 grunt: bin/grunt
-bin/grunt: vendor fmt
-	gb build grunt
+bin/grunt: fmt
+	go get -v grunt/...
 
 major: bin/major
-bin/major: vendor fmt
-	gb build major
+bin/major: fmt
+	go get -v major/...
 
 fmt:
 	go fmt grunt/...
 	go fmt major/...
 
-test: vendor fmt grunt
-	bin/gb test major/...
+test: grunt major
+	go test major/...
 
 benchmarks: vendor fmt
 	go test -run=XXX -bench . -v grunt/...
 
 clean:
 	go clean grunt/...
+	go clean major/...
 	rm -rf pkg/*
 
 docker:
@@ -51,23 +52,5 @@ slicer:
 	docker build -t pesscara/slicer -f slicer.Dockerfile .
 ants:
 	docker build -t pesscara/ants -f ants.Dockerfile .
-
-tools: bin/gb
-
-bin/gb:
-	go get -u -v github.com/constabulary/gb/...
-	go get -u -v github.com/constabulary/gb-vendor
-
-# Get the dependancies, including those for testing (-t)
-vendor:
-	gb vendor \
-	github.com/satori/go.uuid \
-	gopkg.in/yaml.v2 \
-	github.com/codegangsta/cli \
-	gopkg.in/tylerb/graceful.v1/... \
-	github.com/Sirupsen/logrus \
-	gopkg.in/mgo.v2/... \
-	code.google.com/p/gorest \
-	github.com/gorilla/mux \
 
 .PHONY: ants vendor grunt major

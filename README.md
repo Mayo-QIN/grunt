@@ -4,6 +4,7 @@ Grunt is a Go server and Docker to emulate Sergeant on a small scale.
 
 
 ## ToDo
+
 grunt can not write `.nii.gz` files correctly, comes out at `*.gz` without the `nii` part.
 
 ## Building
@@ -59,7 +60,7 @@ wget --content-disposition localhost:9901/rest/job/$id/file/out
 
 ## Development
 
-These tools are written in the (Go language)[https://golang.org/].
+These tools are written in the [Go language](https://golang.org/).
 
 ```
 make help
@@ -96,7 +97,4 @@ SNAPSHOT_ID=$(curl -X POST -d '{ "name" : "djb", "series_id": "'$SERIES_ID'" }' 
 # Upload a file
 curl -X PUT --data-raw @Readme.md localhost:9902/rest/snapshot/$SNAPSHOT_ID/file
 curl localhost:9902/rest/snapshot/$SNAPSHOT_ID/file
-```
-
-Create a Snapshot, and upload a file.
 ```
