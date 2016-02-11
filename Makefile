@@ -23,7 +23,7 @@ help:
 all: grunt major
 
 grunt: bin/grunt
-bin/grunt: fmt
+bin/grunt: fmt assets
 	go get -v grunt/...
 
 major: bin/major
@@ -34,11 +34,21 @@ fmt:
 	go fmt grunt/...
 	go fmt major/...
 
+assets: $(shell find assets -type f) bin/go-bindata
+	bin/go-bindata ${debug} -prefix assets -o src/grunt/assets.go assets/...
+
+bin/go-bindata:
+	go get -u github.com/jteeuwen/go-bindata/...
+
 test: grunt major
 	go test major/...
 
 benchmarks: vendor fmt
 	go test -run=XXX -bench . -v grunt/...
+
+run: debug = -debug
+run: grunt assets
+	bin/grunt gruntfile.yml
 
 clean:
 	go clean grunt/...

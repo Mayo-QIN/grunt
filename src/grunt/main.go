@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/elazarl/go-bindata-assetfs"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -45,6 +46,13 @@ func main() {
 	r.HandleFunc("/rest/service/{id}", StartService).Methods("POST")
 	r.HandleFunc("/rest/job/{id}", GetJob).Methods("GET")
 	r.HandleFunc("/rest/job/{id}/file/{filename}", GetJobFile).Methods("GET")
+
+	r.HandleFunc("/help.html", Help).Methods("GET")
+	r.HandleFunc("/jobs.html", Jobs).Methods("GET")
+	r.HandleFunc("/services.html", Services).Methods("GET")
+	r.HandleFunc("/submit/{id}.html", Submit).Methods("GET")
+
+	r.PathPrefix("/").Handler(http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo}))
 
 	http.Handle("/", r)
 	// log.Fatal(http.ListenAndServe(":9901", nil))

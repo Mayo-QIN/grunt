@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
 	"log"
@@ -33,6 +34,29 @@ type Job struct {
 	Output            string            `json:"output"`
 	StartTime         time.Time         `json:"startTime"`
 	EndTime           time.Time         `json:"endTime"`
+}
+
+func Template(name string, w http.ResponseWriter, request *http.Request) {
+	var templateData = map[string]interface{}{
+		"jobs":       jobs,
+		"services":   config.Services,
+		"serviceMap": config.ServiceMap,
+	}
+	data, _ := Asset("template/" + name + ".html")
+	t, _ := template.New(name).Parse(string(data))
+	t.Execute(w, templateData)
+}
+func Help(w http.ResponseWriter, request *http.Request) {
+	Template("help", w, request)
+}
+func Jobs(w http.ResponseWriter, request *http.Request) {
+	Template("jobs", w, request)
+}
+func Submit(w http.ResponseWriter, request *http.Request) {
+	Template("submit", w, request)
+}
+func Services(w http.ResponseWriter, request *http.Request) {
+	Template("services", w, request)
 }
 
 func GetServices(w http.ResponseWriter, request *http.Request) {

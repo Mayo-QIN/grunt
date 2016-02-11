@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <body>
+
+    <h1>Jobs</h1>
+
+    Currently {{len .jobs}} running jobs
+    <hr/>
+    <table>
+      <tr>
+        <th>UUID</th>
+        <th>command line</th>
+        <th>start time</th>
+        <th>end time</th>
+      </tr>
+
+      {{range .jobs}}
+      <tr>
+        <td>{{.UUID}}</td>
+      </tr>
+
+      {{end}}
+    </table>
+  </body>
+</html>

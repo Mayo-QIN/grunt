@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <body>
+
+    <h1>Services</h1>
+    Currently {{len .services}} services available
+    <hr/>
+    <table>
+      <tr>
+        <th>endpoint</th>
+        <th>command line</th>
+        <th>description</th>
+        <th>defaults</th>
+      </tr>
+
+      {{range .services}}
+      <tr>
+        <td>{{.EndPoint}}</td>
+        <td>{{.CommandLine}}</td>
+        <td>{{.Description}}</td>
+        <td>{{.Defaults}}</td>
+      </tr>
+
+      {{end}}
+    </table>
+  </body>
+</html>
