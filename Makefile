@@ -9,6 +9,8 @@ Makefile for grunt
   test	     - run tests
   benchmarks - run benchmarks
 
+  run        - run a local grunt with an example config (http://localhost:9901)
+
   grunt      - build the grunt executable into bin/grunt
   docker     - build the grunt docker
 

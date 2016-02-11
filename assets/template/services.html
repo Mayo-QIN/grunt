@@ -10,17 +10,24 @@
   <body>
 
     <div class="container">
-    <h1>Services</h1>
+      <h1>Services</h1>
+
+      Variables available: {{ .services }}
+      <br/>
+      
     Currently {{len .services}} services available
     <hr/>
-    <table class="table-striped">
+    <table class="table table-striped">
+      <thead>
       <tr>
         <th>endpoint</th>
         <th>command line</th>
         <th>description</th>
         <th>defaults</th>
       </tr>
+      </thead>
 
+      <tbody>
       {{range .services}}
       <tr>
         <td>{{.EndPoint}}</td>
@@ -28,8 +35,9 @@
         <td>{{.Description}}</td>
         <td>{{.Defaults}}</td>
       </tr>
-
+      
       {{end}}
+      </tbody>
     </table>
     </div>
   </body>

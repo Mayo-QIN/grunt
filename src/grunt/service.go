@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/imdario/mergo"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -31,32 +33,50 @@ type Job struct {
 	CommandLine       []string          `yaml:"commandLine" json:"commandLine"`
 	ParsedCommandLine []string          `json:"-"`
 	FileMap           map[string]string `json:"-"`
-	Output            string            `json:"output"`
 	StartTime         time.Time         `json:"startTime"`
 	EndTime           time.Time         `json:"endTime"`
+	Status            string
+	Address           []string
+
+	// Running process
+	cmd    *exec.Cmd
+	Output bytes.Buffer
 }
 
-func Template(name string, w http.ResponseWriter, request *http.Request) {
+func Template(name string, data map[string]interface{}, w http.ResponseWriter, request *http.Request) {
 	var templateData = map[string]interface{}{
 		"jobs":       jobs,
 		"services":   config.Services,
 		"serviceMap": config.ServiceMap,
 	}
-	data, _ := Asset("template/" + name + ".html")
-	t, _ := template.New(name).Parse(string(data))
+	// merge in our extra data
+	mergo.Map(&templateData, data)
+	contents, _ := Asset("template/" + name + ".html")
+	t, _ := template.New(name).Parse(string(contents))
 	t.Execute(w, templateData)
 }
 func Help(w http.ResponseWriter, request *http.Request) {
-	Template("help", w, request)
+	Template("help", nil, w, request)
 }
 func Jobs(w http.ResponseWriter, request *http.Request) {
-	Template("jobs", w, request)
+	Template("jobs", nil, w, request)
 }
 func Submit(w http.ResponseWriter, request *http.Request) {
-	Template("submit", w, request)
+	Template("submit", nil, w, request)
 }
 func Services(w http.ResponseWriter, request *http.Request) {
-	Template("services", w, request)
+	Template("services", nil, w, request)
+}
+func JobDetail(w http.ResponseWriter, request *http.Request) {
+	key := mux.Vars(request)["id"]
+	job := jobs[key]
+	if job == nil {
+		http.Error(w, "could not find job", http.StatusNotFound)
+		return
+	}
+	var data = map[string]interface{}{
+		"job": job}
+	Template("job", data, w, request)
 }
 
 func GetServices(w http.ResponseWriter, request *http.Request) {
@@ -85,6 +105,12 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		CommandLine: service.CommandLine,
 		FileMap:     make(map[string]string),
 	}
+
+	// do we have an email address?
+	if request.MultipartForm.Value["mail"] != nil {
+		job.Address = request.MultipartForm.Value["mail"]
+	}
+
 	cl := make([]string, 0)
 	// Make a temp directory
 	dir, err := ioutil.TempDir("", job.UUID)
@@ -142,10 +168,35 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 	job.ParsedCommandLine = cl
 	cmd := exec.Command(cl[0], cl[1:]...)
 	job.StartTime = time.Now()
-	o, err := cmd.Output()
-	job.Output = string(o)
-	log.Printf("Output... %v", job.Output)
-	job.EndTime = time.Now()
+	cmd.Stdout = &job.Output
+	cmd.Stderr = &job.Output
+	job.cmd = cmd
+	job.Status = "pending"
+
+	// Launch a go routine to wait
+	go func() {
+		job.Status = "running"
+		job.cmd.Start()
+		err := job.cmd.Wait()
+		job.EndTime = time.Now()
+		if err != nil {
+			job.Status = "error"
+		} else {
+			if job.cmd.ProcessState.Success() {
+				job.Status = "success"
+			} else {
+				job.Status = "failed"
+			}
+		}
+		// Send email here
+		log.Printf("Would send email to %v", job.Address)
+
+		// Cleanup after 10 minutes
+		<-time.After(time.Minute * 120)
+		delete(jobs, job.UUID)
+
+	}()
+
 	json.NewEncoder(w).Encode(job)
 	jobs[job.UUID] = &job
 }

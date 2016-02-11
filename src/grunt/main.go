@@ -1,32 +1,43 @@
 package main
 
 import (
-	"github.com/elazarl/go-bindata-assetfs"
-	"io/ioutil"
-	"net/http"
-	"os"
-	"time"
-
+	"flag"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
 	graceful "gopkg.in/tylerb/graceful.v1"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"net/http"
+	"time"
 )
+
+type SMTP struct {
+	Username string
+	Password string
+	Server   string
+}
 
 type Config struct {
 	Services   []*Service          `json:"services"`
 	ServiceMap map[string]*Service `json:omit`
+	Mail       SMTP
 }
 
 var config Config
 
 func main() {
-	config.ServiceMap = make(map[string]*Service)
+	var port int
+	flag.IntVar(&port, "p", 9901, "specify port to use.  defaults to 9901.")
 
-	if len(os.Args) < 2 {
+	config.ServiceMap = make(map[string]*Service)
+	flag.Parse()
+
+	if len(flag.Args()) < 1 {
 		log.Fatal("Usage: grunt gruntfile.yml")
 	}
-	gruntfile := os.Args[1]
+	gruntfile := flag.Arg(0)
 	data, err := ioutil.ReadFile(gruntfile)
 	if err != nil {
 		log.Fatal("Error reading %v: %v", gruntfile, err)
@@ -39,6 +50,8 @@ func main() {
 		config.ServiceMap[service.EndPoint] = service
 	}
 
+	log.Infof("SMTP: %+v", config.Mail)
+
 	// Expose the endpoints
 	r := mux.NewRouter()
 	r.HandleFunc("/rest/service", GetServices).Methods("GET")
@@ -49,13 +62,14 @@ func main() {
 
 	r.HandleFunc("/help.html", Help).Methods("GET")
 	r.HandleFunc("/jobs.html", Jobs).Methods("GET")
+	r.HandleFunc("/job/{id}", JobDetail).Methods("GET")
 	r.HandleFunc("/services.html", Services).Methods("GET")
 	r.HandleFunc("/submit/{id}.html", Submit).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo}))
 
 	http.Handle("/", r)
-	// log.Fatal(http.ListenAndServe(":9901", nil))
-	log.Info("Starting grunt on port 9901 (http://localhost:9901)")
-	graceful.Run(":9901", 10*time.Second, nil)
+	log.Infof("Starting grunt on http://localhost:%v", port)
+	graceful.Run(fmt.Sprintf(":%d", port), 1*time.Second, nil)
+
 }

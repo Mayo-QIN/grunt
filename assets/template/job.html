@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>grunt {{.job.UUID}}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+
+    <div class="container">
+      <h1>Job detail</h1>
+
+    {{ with .job }}
+      <div class="row">
+        <div class="col-sm-4">UUID</div>
+        <div class="col-sm-8">{{.UUID}}</div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-4">Command line</div>
+        <div class="col-sm-8">{{.CommandLine}}</div>
+      </div>
+      
+      <div class="row">
+        <div class="col-sm-4">Parsed line</div>
+        <div class="col-sm-8">{{.ParsedCommandLine}}</div>
+      </div>
+
+      <div class="panel panel-default">
+        <div class="panel-heading">Log</div>
+        <div class="panel-body">
+          <pre>{{.Output.String}}</pre>
+        </div>
+      </div>
+      
+      {{end}}      
+    </div>
+  </body>
+</html>

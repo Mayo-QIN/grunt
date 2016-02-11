@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>grunt jobs</title>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
@@ -14,21 +15,31 @@
 
       Currently {{len .jobs}} running jobs
       <hr/>
-      <table class="table-striped">
-        <tr>
-          <th>UUID</th>
-          <th>command line</th>
-          <th>start time</th>
-          <th>end time</th>
-        </tr>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>UUID</th>
+            <th>command line</th>
+            <th>start time</th>
+            <th>status</th>
+            <th>end time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .jobs}}
+          <tr>
+            <td><a href="/job/{{.UUID}}">{{.UUID}}</a></td>
+            <td>{{.CommandLine}}</td>
+            <td>{{.StartTime}}</td>
+            <td>{{.Status}}</td>
+            <td>{{.EndTime}}</td>
+          </tr>
 
-        {{range .jobs}}
-        <tr>
-          <td>{{.UUID}}</td>
-        </tr>
-
-        {{end}}
+          {{end}}
+        </tbody>
       </table>
     </div>
   </body>
 </html>
+
+
