@@ -192,7 +192,7 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		// Send email here
 		log.Printf("Would send email to %v", job.Address)
 		Email(&job)
-		// Cleanup after 10 minutes
+		// Cleanup after 120 minutes
 		<-time.After(time.Minute * 120)
 		Cleanup(&job)
 	}()

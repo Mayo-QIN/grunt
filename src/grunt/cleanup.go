@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"io/ioutil"
 	"net/smtp"
+	"os"
 	"strings"
 	"text/template"
 )
@@ -47,4 +49,18 @@ func Email(job *Job) {
 
 func Cleanup(job *Job) {
 	log.Printf("Cleaning up %v", job.UUID)
+
+	dir, err := ioutil.TempDir("", job.UUID)
+	if err != nil {
+		log.Errorf("Error creating temp dir path: %v", err.Error())
+		return
+	}
+	log.Printf("Deleting temp directory %v", dir)
+	err = os.RemoveAll(dir)
+	if err != nil {
+		log.Errorf("Error removing dir: %v", err.Error())
+		return
+	}
+	delete(jobs, job.UUID)
+	log.Printf("Cleanup done of %v (%v)", job.Endpoint, job.UUID)
 }
