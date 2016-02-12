@@ -1,0 +1,16 @@
+To: {{.to}}
+Subject: Results of {{.job.Endpoint}}
+
+I am the email for the grunt job {{.job.Endpoint}} ({{.job.UUID}}).
+
+Job Details are here: http://{{.config.Server}}/job/{{.job.UUID}}
+
+{{$config := .config}}{{$uuid := .job.UUID}}{{range $key, $value := .job.FileMap}}
+File {{$key}} -- http://{{$config.Server}}/rest/job/{{$uuid}}/file/{{$key}}
+{{end}}
+
+The job started at {{.job.StartTime}}
+The job finished at {{.job.EndTime}}
+
+Log:
+{{.job.Output.String}}

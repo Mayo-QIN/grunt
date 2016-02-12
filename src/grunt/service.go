@@ -37,7 +37,7 @@ type Job struct {
 	EndTime           time.Time         `json:"endTime"`
 	Status            string
 	Address           []string
-
+	Endpoint          string
 	// Running process
 	cmd    *exec.Cmd
 	Output bytes.Buffer
@@ -104,6 +104,7 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		UUID:        uuid.NewV4().String(),
 		CommandLine: service.CommandLine,
 		FileMap:     make(map[string]string),
+		Endpoint:    service.EndPoint,
 	}
 
 	// do we have an email address?
@@ -190,11 +191,10 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		}
 		// Send email here
 		log.Printf("Would send email to %v", job.Address)
-
-		// Cleanup after 10 minutes
+		Email(&job)
+		// Cleanup after 120 minutes
 		<-time.After(time.Minute * 120)
-		delete(jobs, job.UUID)
-
+		Cleanup(&job)
 	}()
 
 	json.NewEncoder(w).Encode(job)

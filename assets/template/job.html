@@ -29,6 +29,21 @@
         <div class="col-sm-8">{{.ParsedCommandLine}}</div>
       </div>
 
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Output files</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{$uuid := .UUID}}
+          {{range $key, $value := .FileMap}}
+          <tr>
+            <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
+          </tr>
+            {{end}}
+        </tbody>
+      </table>
       <div class="panel panel-default">
         <div class="panel-heading">Log</div>
         <div class="panel-body">
