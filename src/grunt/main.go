@@ -14,15 +14,18 @@ import (
 )
 
 type SMTP struct {
+	From     string
 	Username string
 	Password string
 	Server   string
+	Port     int
 }
 
 type Config struct {
 	Services   []*Service          `json:"services"`
 	ServiceMap map[string]*Service `json:omit`
 	Mail       SMTP
+	Server     string
 }
 
 var config Config
@@ -48,6 +51,12 @@ func main() {
 	}
 	for _, service := range config.Services {
 		config.ServiceMap[service.EndPoint] = service
+	}
+	if config.Mail.Port == 0 {
+		config.Mail.Port = 25
+	}
+	if config.Mail.From == "" {
+		config.Mail.From = "noreply@example.com"
 	}
 
 	log.Infof("SMTP: %+v", config.Mail)
