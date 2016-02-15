@@ -98,3 +98,9 @@ SNAPSHOT_ID=$(curl -X POST -d '{ "name" : "djb", "series_id": "'$SERIES_ID'" }' 
 curl -X PUT --data-raw @Readme.md localhost:9902/rest/snapshot/$SNAPSHOT_ID/file
 curl localhost:9902/rest/snapshot/$SNAPSHOT_ID/file
 ```
+
+```
+id=`curl --silent -X POST --form seconds=120 localhost:9901/rest/service/sleep | jq -r .uuid`
+curl -v localhost:9901/rest/job/wait/$id
+wget --content-disposition localhost:9901/rest/job/$id/file/out
+```
