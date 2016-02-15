@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"github.com/imdario/mergo"
+	uuid "github.com/satori/go.uuid"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -13,12 +15,11 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"time"
-
-	"github.com/gorilla/mux"
-	uuid "github.com/satori/go.uuid"
 )
 
+var jobMutex sync.Mutex
 var jobs = make(map[string]*Job)
 
 type Service struct {
@@ -29,6 +30,7 @@ type Service struct {
 }
 
 type Job struct {
+	sync.Mutex        `json:ignore`
 	UUID              string            `json:"uuid"`
 	CommandLine       []string          `yaml:"commandLine" json:"commandLine"`
 	ParsedCommandLine []string          `json:"-"`
@@ -38,6 +40,10 @@ type Job struct {
 	Status            string
 	Address           []string
 	Endpoint          string
+
+	// Registered channels
+	waiters []chan bool
+
 	// Running process
 	cmd    *exec.Cmd
 	Output bytes.Buffer
@@ -176,6 +182,8 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 
 	// Launch a go routine to wait
 	go func() {
+		jobMutex.Lock()
+		defer jobMutex.Unlock()
 		job.Status = "running"
 		job.cmd.Start()
 		err := job.cmd.Wait()
@@ -189,9 +197,14 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 				job.Status = "failed"
 			}
 		}
+		// Notify waiters
+		for _, c := range job.waiters {
+			c <- true
+		}
+
 		// Send email here
-		log.Printf("Would send email to %v", job.Address)
 		Email(&job)
+
 		// Cleanup after 120 minutes
 		<-time.After(time.Minute * 120)
 		Cleanup(&job)
@@ -204,6 +217,18 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 func GetJob(w http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	job := jobs[vars["id"]]
+	json.NewEncoder(w).Encode(job)
+}
+
+func WaitForJob(w http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	job := jobs[vars["id"]]
+	c := make(chan bool)
+	job.Lock()
+	job.waiters = append(job.waiters, c)
+	job.Unlock()
+	<-c
+	close(c)
 	json.NewEncoder(w).Encode(job)
 }
 
