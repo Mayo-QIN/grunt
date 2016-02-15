@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"io/ioutil"
+	"log"
 	"net/smtp"
 	"os"
 	"strings"
@@ -12,8 +12,7 @@ import (
 )
 
 func Email(job *Job) {
-	log.Printf("Mailing status for %v", job.UUID)
-	if config.Mail.Server == "" {
+	if config.Mail.Server == "" || len(job.Address) == 0 {
 		return
 	}
 	var auth smtp.Auth = nil
@@ -36,12 +35,13 @@ func Email(job *Job) {
 		return
 	}
 	server := fmt.Sprintf("%s:%d", config.Mail.Server, config.Mail.Port)
+	log.Printf("Mailing status for %v", job.UUID)
 	log.Printf("Sending to: %v", templateData["job"])
 	log.Printf("With auth: %+v", auth)
 	log.Printf("Body: \n%v", buffer.String())
 	err = smtp.SendMail(server, auth, config.Mail.From, job.Address, buffer.Bytes())
 	if err != nil {
-		log.Errorf("Error sending mail: %v", err.Error())
+		log.Printf("Error sending mail: %v", err.Error())
 	} else {
 		log.Printf("Mail sent")
 	}
@@ -52,13 +52,13 @@ func Cleanup(job *Job) {
 
 	dir, err := ioutil.TempDir("", job.UUID)
 	if err != nil {
-		log.Errorf("Error creating temp dir path: %v", err.Error())
+		log.Printf("Error creating temp dir path: %v", err.Error())
 		return
 	}
 	log.Printf("Deleting temp directory %v", dir)
 	err = os.RemoveAll(dir)
 	if err != nil {
-		log.Errorf("Error removing dir: %v", err.Error())
+		log.Printf("Error removing dir: %v", err.Error())
 		return
 	}
 	delete(jobs, job.UUID)
