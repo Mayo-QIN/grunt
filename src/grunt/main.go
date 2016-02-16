@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
-	graceful "gopkg.in/tylerb/graceful.v1"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"time"
 )
 
 type SMTP struct {
@@ -78,6 +76,6 @@ func main() {
 
 	http.Handle("/", r)
 	log.Printf("Starting grunt on http://localhost:%v", port)
-	graceful.Run(fmt.Sprintf(":%d", port), 1*time.Second, nil)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 
 }

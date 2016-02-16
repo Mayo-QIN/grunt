@@ -35,18 +35,18 @@ type Job struct {
 	CommandLine       []string          `yaml:"commandLine" json:"commandLine"`
 	ParsedCommandLine []string          `json:"-"`
 	FileMap           map[string]string `json:"-"`
-	StartTime         time.Time         `json:"startTime"`
-	EndTime           time.Time         `json:"endTime"`
-	Status            string
-	Address           []string
-	Endpoint          string
+	StartTime         time.Time         `json:"start_time"`
+	EndTime           time.Time         `json:"end_time"`
+	Status            string            `json:"status"`
+	Address           []string          `json:"address"`
+	Endpoint          string            `json:"endpoint"`
 
 	// Registered channels
 	waiters []chan bool
 
 	// Running process
 	cmd    *exec.Cmd
-	Output bytes.Buffer
+	Output bytes.Buffer `json:"output"`
 }
 
 func Template(name string, data map[string]interface{}, w http.ResponseWriter, request *http.Request) {

@@ -32,11 +32,12 @@
 # Used for logging and email
 server: localhost:9901
 
+# Mail configuration
 mail:
   from: noreply@grunt-docker.io
   server: smtprelay.mayo.edu
-  # username: panos
-  # password: pwd
+  # username: grunt
+  # password: <secret>
   
 services:
   - endPoint: echo
