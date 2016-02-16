@@ -1,19 +1,31 @@
-## Grunt
+# Grunt
 
-Grunt is a Go server and Docker to emulate Sergeant on a small scale.
+Grunt is a Go server that exposes a REST interface to command line programs.  Grunt is configured through a simple YML file.
 
+## Build
 
-## ToDo
+`make grunt`
 
-grunt can not write `.nii.gz` files correctly, comes out at `*.gz` without the `nii` part.
+## Run
 
-## Building
+`grunt -p 9901 gruntfile.yml`
 
-make grunt
+Run grunt on port `9901` (the default listening port).
 
-## Usage
+## REST Endpoints
 
-A service consists of the following fields:
+| endpoint                        | method | parameters       | description                                                 |
+|---------------------------------|--------|------------------|-------------------------------------------------------------|
+| `/rest/service`                 | GET    | --               | List the services available                                 |
+| `/rest/service/{id}             | GET    | `id`             | Detail for service `id`                                     |
+| `/rest/service/{id}             | POST   | `id`             | Start a new Job using service `id`                          |
+| `/rest/job/{id}`                | GET    | `id`             | Details about a Job                                         |
+| `/rest/job/wait/{id}`           | GET    | `id`             | Does not return until the Job completes                     |
+| `/rest/job/{id}/file/{filename}` | GET    | `id`, `filename` | Retrieve the file `filename` from the Job specified by `id` |
+
+## Configuration
+
+An example configuration is found in `gruntfile.yml`. A service consists of the following fields:
 
 ```
 endPoint      -- REST endpoint, e.g. /rest/service/<endPoint>
@@ -26,8 +38,7 @@ description   -- description of the endpoint
 defaults      -- a hashmap of default values for "@value" parameters
 ```
 
-this example configuration file exposes 2 endpoints, test and copy
-test simply echos the input and can be called like this:
+This example configuration file exposes 2 endpoints, test and copy. `test` simply echoes the input and can be called like this:
 
 ```
 curl -X POST  -v --form Message=hi localhost:9991/rest/service/test
@@ -58,43 +69,31 @@ wget --content-disposition localhost:9901/rest/job/$id/file/out
 ```
 
 
+## ToDo
+
+grunt can not write `.nii.gz` files correctly, comes out at `*.gz` without the `nii` part.
+
+## Building
+
+make grunt
+
+
+
 ## Development
 
-These tools are written in the [Go language](https://golang.org/).
+These tools are written in the [Go language](https://golang.org/).  Makefile targets are listed by `make help`.
 
-```
-make help
-```
+## Example
 
-
-## Major
-
-Major is a replacement for TACTIC focused simply on storage and a REST API.
-
-### Usage
-
-Start a Docker
-
-```
-docker run -d -P --name mongo mongo
-docker run -it --link mongo:mongo --rm mongo sh -c 'exec mongo "$MONGO_PORT_27017_TCP_ADDR:$MONGO_PORT_27017_TCP_PORT"'
-```
-
-
-```
-env MONGO_PORT_27017_TCP_ADDR=mi3c-contra.mayo.edu MONGO_PORT_27017_TCP_PORT=49183 bin/major 
-```
-
-
-#### Create a subject
+This is an example of running the `sleep` job for 120 seconds.
 
 ```bash
-SUBJECT_ID=$(curl -X POST -d '{ "name" : "djb" }' localhost:9902/rest/subject | jq --raw-output .id)
-STUDY_ID=$(curl -X POST -d '{ "name" : "djb", "subject_id": "'$SUBJECT_ID'" }' localhost:9902/rest/study | jq --raw-output .id)
-SERIES_ID=$(curl -X POST -d '{ "name" : "djb", "study_id": "'$STUDY_ID'" }' localhost:9902/rest/series | jq --raw-output .id)
-SNAPSHOT_ID=$(curl -X POST -d '{ "name" : "djb", "series_id": "'$SERIES_ID'" }' localhost:9902/rest/snapshot | jq --raw-output .id)
+# Start the job and extract the uuid using jq
+id=`curl --silent -X POST --form seconds=120 localhost:9901/rest/service/sleep | jq -r .uuid`
 
-# Upload a file
-curl -X PUT --data-raw @Readme.md localhost:9902/rest/snapshot/$SNAPSHOT_ID/file
-curl localhost:9902/rest/snapshot/$SNAPSHOT_ID/file
+# Status of the job
+curl -v localhost:9901/rest/job/$id
+
+# Wait for the job to complete
+curl -v localhost:9901/rest/job/wait/$id
 ```

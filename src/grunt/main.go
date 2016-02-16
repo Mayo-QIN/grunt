@@ -3,14 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"github.com/elazarl/go-bindata-assetfs"
 	"github.com/gorilla/mux"
-	graceful "gopkg.in/tylerb/graceful.v1"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"log"
 	"net/http"
-	"time"
 )
 
 type SMTP struct {
@@ -59,14 +57,13 @@ func main() {
 		config.Mail.From = "noreply@example.com"
 	}
 
-	log.Infof("SMTP: %+v", config.Mail)
-
 	// Expose the endpoints
 	r := mux.NewRouter()
 	r.HandleFunc("/rest/service", GetServices).Methods("GET")
 	r.HandleFunc("/rest/service/{id}", GetService).Methods("GET")
 	r.HandleFunc("/rest/service/{id}", StartService).Methods("POST")
 	r.HandleFunc("/rest/job/{id}", GetJob).Methods("GET")
+	r.HandleFunc("/rest/job/wait/{id}", WaitForJob).Methods("GET")
 	r.HandleFunc("/rest/job/{id}/file/{filename}", GetJobFile).Methods("GET")
 
 	r.HandleFunc("/help.html", Help).Methods("GET")
@@ -78,7 +75,7 @@ func main() {
 	r.PathPrefix("/").Handler(http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo}))
 
 	http.Handle("/", r)
-	log.Infof("Starting grunt on http://localhost:%v", port)
-	graceful.Run(fmt.Sprintf(":%d", port), 1*time.Second, nil)
+	log.Printf("Starting grunt on http://localhost:%v", port)
+	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 
 }

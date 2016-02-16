@@ -30,13 +30,14 @@
 
 # This is the hostname:port that the server is running on.
 # Used for logging and email
-server: grunt-docker.io:9901
+server: localhost:9901
 
+# Mail configuration
 mail:
   from: noreply@grunt-docker.io
   server: smtprelay.mayo.edu
-  # username: panos
-  # password: pwd
+  # username: grunt
+  # password: <secret>
   
 services:
   - endPoint: echo
