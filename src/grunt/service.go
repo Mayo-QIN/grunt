@@ -183,7 +183,6 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 	// Launch a go routine to wait
 	go func() {
 		jobMutex.Lock()
-		defer jobMutex.Unlock()
 		job.Status = "running"
 		job.cmd.Start()
 		err := job.cmd.Wait()
@@ -197,7 +196,9 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 				job.Status = "failed"
 			}
 		}
+		jobMutex.Unlock()
 		// Notify waiters
+		log.Printf("%v completed with status %v", job.UUID, job.Status)
 		for _, c := range job.waiters {
 			c <- true
 		}
