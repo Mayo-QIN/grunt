@@ -5,7 +5,6 @@ define help
 
 Makefile for grunt
   all	     - make everything
-  vendor     - find dependancies
   test	     - run tests
   benchmarks - run benchmarks
 
@@ -45,7 +44,7 @@ bin/go-bindata:
 test: grunt major
 	go test major/...
 
-benchmarks: vendor fmt
+benchmarks: fmt
 	go test -run=XXX -bench . -v grunt/...
 
 run: debug = -debug
@@ -65,4 +64,4 @@ slicer:
 ants:
 	docker build -t pesscara/ants -f ants.Dockerfile .
 
-.PHONY: ants vendor grunt major
+.PHONY: ants grunt major
