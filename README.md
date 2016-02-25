@@ -2,6 +2,8 @@
 
 Grunt is a Go server that exposes a REST interface to command line programs.  Grunt is configured through a simple YML file.
 
+Grunt development was sponsored by NCI Grant CA160045.
+
 ## Build
 
 `make grunt`
