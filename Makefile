@@ -11,7 +11,6 @@ Makefile for grunt
   run        - run a local grunt with an example config (http://localhost:9901)
 
   grunt      - build the grunt executable into bin/grunt
-  docker     - build the grunt docker
 
   tools      - run 'go get' to install missing tools
 
