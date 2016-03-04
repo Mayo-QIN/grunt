@@ -14,6 +14,21 @@ Grunt development was sponsored by NCI Grant CA160045.
 
 Run grunt on port `9901` (the default listening port).
 
+## run demo
+
+Demo
+** Need to execute as root or sudo **
+
+    make demo
+Was my docker image created?
+    docker image
+if you can see pesscara/grunt yes
+Then to lunch the docker type:
+    docker run -d -p 9901:9901 pesscara/grunt
+You can check that docker is runing utiliing the floowing command
+    docker ps 
+
+
 ## REST Endpoints
 
 | endpoint                        | method | parameters       | description                                                 |
@@ -80,7 +95,6 @@ grunt can not write `.nii.gz` files correctly, comes out at `*.gz` without the `
 make grunt
 
 
-
 ## Development
 
 These tools are written in the [Go language](https://golang.org/).  Makefile targets are listed by `make help`.
@@ -103,10 +117,8 @@ curl -v localhost:9901/rest/job/wait/$id
 ##Notes 
 ###Delete al docker images
 
-    # Delete all containers
-    docker rm $(docker ps -a -q)
     # Delete all images
-    docker rmi $(docker images -q)
+    docker images -q |xargs docker rmi
 
 ##Acknowledgement 
 
