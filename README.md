@@ -20,6 +20,7 @@ Demo
 ** Need to execute as root or sudo **
 
     make demo
+
 Was my docker image created?
     docker image
 if you can see pesscara/grunt yes
