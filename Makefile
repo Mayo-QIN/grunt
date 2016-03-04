@@ -12,6 +12,8 @@ Makefile for grunt
 
   grunt      - build the grunt executable into bin/grunt
 
+  demo		 - build a docker that offers basic example
+
   tools      - run 'go get' to install missing tools
 
 endef
@@ -48,5 +50,8 @@ run: grunt assets
 clean:
 	go clean grunt/...
 	rm -rf pkg/*
+
+demo:
+	docker build -t pesscara/grunt -f docker/grunt.Dockerfile .
 
 .PHONY: ants grunt 
