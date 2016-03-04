@@ -24,8 +24,11 @@ Was my docker image created?
     docker image
 if you can see pesscara/grunt yes
 Then to lunch the docker type:
+
     docker run -d -p 9901:9901 pesscara/grunt
+
 You can check that docker is runing utiliing the floowing command
+
     docker ps 
 
 
