@@ -12,7 +12,7 @@ USER grunt
 
 # Install files
 COPY bin/grunt /grunt/grunt
-COPY gruntfile.yml /docker/gruntfile.yml
+COPY gruntfile.yml /grunt/docker/gruntfile.yml
 
 # What do we run on startup?
 CMD ["/grunt/grunt", "gruntfile.yml"]
