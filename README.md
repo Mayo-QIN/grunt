@@ -100,6 +100,13 @@ curl -v localhost:9901/rest/job/$id
 curl -v localhost:9901/rest/job/wait/$id
 ```
 
+##Notes 
+###Delete al docker images
+
+    # Delete all containers
+    docker rm $(docker ps -a -q)
+    # Delete all images
+    docker rmi $(docker images -q)
 
 ##Acknowledgement 
 
