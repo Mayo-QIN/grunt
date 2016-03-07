@@ -29,3 +29,9 @@ USER grunt
 WORKDIR /grunt
 COPY docker/ants.gruntfile.yml /grunt/gruntfile.yml
 COPY docker/simpleReg simpleReg
+
+# What do we run on startup?
+CMD ["/grunt/grunt", "gruntfile.yml"]
+
+# We expose port 9901 by default
+EXPOSE 9902:9902
