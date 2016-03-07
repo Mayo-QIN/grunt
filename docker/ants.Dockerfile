@@ -27,5 +27,5 @@ RUN echo export ANTSPATH=${ANTSPATH:="/tmp/build/bin"} >> ~/.bashrc
 # copy .yml file as well te script to run. Need to modify so it works.
 USER grunt
 WORKDIR /grunt
-COPY ants.gruntfile.yml gruntfile.yml
+COPY docker/ants.gruntfile.yml /grunt/gruntfile.yml
 COPY simpleReg simpleReg
