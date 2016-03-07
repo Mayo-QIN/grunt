@@ -28,4 +28,4 @@ RUN echo export ANTSPATH=${ANTSPATH:="/tmp/build/bin"} >> ~/.bashrc
 USER grunt
 WORKDIR /grunt
 COPY docker/ants.gruntfile.yml /grunt/gruntfile.yml
-COPY simpleReg simpleReg
+COPY docker/simpleReg simpleReg
