@@ -13,7 +13,9 @@ Makefile for grunt
   grunt      - build the grunt executable into bin/grunt
 
   demo		 - build a docker that offers basic example
-
+  
+  ants		 - build a docker that is aimed to registration utilizig ANTs
+  
   tools      - run 'go get' to install missing tools
 
 endef
@@ -44,6 +46,7 @@ benchmarks: fmt
 	go test -run=XXX -bench . -v grunt/...
 
 run: debug = -debug
+
 run: grunt assets
 	bin/grunt gruntfile.yml
 
@@ -53,5 +56,8 @@ clean:
 
 demo:
 	docker build -t pesscara/grunt -f docker/grunt.Dockerfile .
+
+ants:
+	docker build -t pesscara/ants -f docker/ants.Dockerfile .
 
 .PHONY: ants grunt 
