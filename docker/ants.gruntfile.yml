@@ -1,4 +1,3 @@
-
 services:
   - endPoint: echo
     commandLine: ["echo", "@message"]
@@ -6,5 +5,4 @@ services:
     defaults:
       message: "Hi From Grunt"
   - endPoint: affine
-    commandLine: ["./simpleReg", "<fixed", "<moving", ">output"]
-    
+    commandLine: ["./simpleReg", "-d", "@dimension","-f","<fixed","-m", "<moving","-e", ">registered","-w",">warped", "-i",">inverse"]
