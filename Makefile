@@ -5,7 +5,9 @@ define help
 
 Makefile for grunt
   all	     - make everything
+
   test	     - run tests
+  
   benchmarks - run benchmarks
 
   run        - run a local grunt with an example config (http://localhost:9901)
