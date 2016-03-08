@@ -8,6 +8,8 @@ Grunt development was sponsored by NCI Grant CA160045.
 
 `make grunt`
 
+`make demo # contains the basic image`
+
 ## Run
 
 `grunt -p 9901 gruntfile.yml`
