@@ -30,8 +30,6 @@ RUN yum install -y libtiff-devel tcp_wrappers-devel
 RUN yum install -y telnet
 RUN yum -y install python-pip
 RUN pip install --upgrade pip
-
-
 RUN mkdir ~/src && cd ~/src && \
   git clone https://github.com/xianyi/OpenBLAS && \
   cd ~/src/OpenBLAS && \
@@ -67,12 +65,6 @@ RUN cd ~/src/numpy && \
 RUN pip install ipython
 RUN pip install cython --upgrade
 RUN pip install scipy
-# RUN cd ~/src && \
-#  git clone https://github.com/scipy/scipy.git
-# RUN cd ~/src/scipy && \
-#   python setup.py config && \
-#   python setup.py build --fcompiler=gnu95 && \
-#   python setup.py install
 RUN pip install scikit-learn
 RUN pip install scikit-image
 RUN pip install --trusted-host www.simpleitk.org -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK 
@@ -83,14 +75,14 @@ RUN pip install tornado
 RUN pip install nibabel
 RUN pip install nipype
 RUN pip install wget
-RUN pip install Flask
-RUN pip install Flask-Admin
-RUN pip install Flask-Assets
-RUN pip install markdown
-RUN pip install Flask-Login
-RUN pip install Flask-WTF
 ENV OPENBLAS_NUM_THREADS=4
 RUN pip install chainer
 RUN pip install theano
 RUN pip install keras
+COPY docker/unsuper.gruntfile.yml /grunt/gruntfile.yml
+COPY docker/_kmeansseg _kmeansseg
+# What do we run on startup?
+CMD ["/grunt/grunt", "gruntfile.yml"]
 
+# We expose port 9901 by default
+EXPOSE 9901:9901

@@ -1,0 +1,5 @@
+services:
+  - endPoint: kmeansseg
+    commandLine: ["python","_kmeansseg", "-clusternumber", "@clusternumber","-imageA","<imageA","-imageB", "<imageB","-output", ">output"]
+
+
