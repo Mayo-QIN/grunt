@@ -50,6 +50,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser( description='This file will accept as input a T1 post file and will segment the tumor. Will also require to have the T2 file as well as the ATLAS images it needs')
 	parser.add_argument ( "--imageA",  help="The input filename for image A(Input)" , required=True)
 	parser.add_argument ( "--imageB",  help="The input filename for image B(Input)" , required=True)
+	parser.add_argument ( "--output",  help="The input filename for image B(Input)" , required=True)
 	parser.add_argument ( "--clusternumber",  help="The number of cluster" , required=True)
 	parser.add_argument('--version', action='version', version='%(prog)s 0.1')
 	parser.add_argument("-q", "--quiet",
