@@ -62,4 +62,7 @@ demo:
 ants:
 	docker build -t pesscara/ants -f docker/ants.Dockerfile .
 
+machinelearn:
+	docker build -t pesscara/machinelearn -f docker/python.Dockerfile .
+	
 .PHONY: ants grunt 
