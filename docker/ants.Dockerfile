@@ -34,4 +34,4 @@ COPY docker/simpleReg simpleReg
 CMD ["/grunt/grunt", "gruntfile.yml"]
 
 # We expose port 9901 by default
-EXPOSE 9902:9902
+EXPOSE 9901:9901
