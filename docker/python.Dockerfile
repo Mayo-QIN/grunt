@@ -19,6 +19,7 @@ RUN yum -y install Cython
 RUN yum -y install epel-release
 RUN yum -y install cmake
 RUN yum -y install make
+RUN yum install -y libjpeg-devel
 # RUN yum install -y zlib-dev openssl-devel sqlite-devel
 # RUN yum install -y glibmm24-devel gtkmm24-devel gsl-devel
 # nifticlib dependencies
