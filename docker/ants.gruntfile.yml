@@ -5,5 +5,4 @@ services:
     defaults:
       message: "Hi From Grunt"
   - endPoint: affine
-    commandLine: ["./simpleReg", "-d", "@dimension","-f","<fixed","-m", "<moving","-e", ">registered","-w",">warped", "-i",">inverse"]
-    
+    commandLine: ["./simpleReg", "<fixed","<moving", ">registered"]
