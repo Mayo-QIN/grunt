@@ -20,8 +20,8 @@ RUN yum -y install epel-release
 RUN yum -y install cmake
 RUN yum -y install make
 RUN yum install -y libjpeg-devel
-# RUN yum install -y zlib-dev openssl-devel sqlite-devel
-# RUN yum install -y glibmm24-devel gtkmm24-devel gsl-devel
+RUN yum install -y zlib-dev openssl-devel sqlite-devel
+RUN yum install -y glibmm24-devel gtkmm24-devel gsl-devel
 # nifticlib dependencies
 RUN yum install -y csh
 # python dependencies for https, bzip2
@@ -41,13 +41,12 @@ RUN echo /opt/OpenBLAS/lib >  /etc/ld.so.conf.d/openblas.conf
 RUN ldconfig
 ENV LD_LIBRARY_PATH=/opt/OpenBLAS/lib:$LD_LIBRARY_PATH
 RUN yum -y install freetype freetype-devel libpng-devel
-RUN pip install pandas
 RUN pip install matplotlib
 # now install numpy source
 RUN pwd 
 RUN ls
 RUN cd ~/src && \
-  git clone  -b maintenance/1.9.x https://github.com/numpy/numpy && \
+  git clone  -b maintenance/1.11.x https://github.com/numpy/numpy && \
   cd numpy && \
   touch site.cfg
 RUN echo [default]  >                           ~/src/numpy/site.cfg && \
@@ -69,6 +68,7 @@ RUN pip install scipy
 RUN pip install scikit-learn
 RUN pip install scikit-image
 RUN pip install --trusted-host www.simpleitk.org -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK 
+RUN pip install pandas
 RUN pip install argparse
 RUN pip install pydicom
 RUN pip install networkx
