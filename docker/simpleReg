@@ -73,7 +73,7 @@ echo ${out}
 VAR=$m
 DIR=$(dirname "${VAR}")
 echo "${DIR}"
-cp ${out}0GenericAffine.mat ${DIR}Affine.mat
-cp ${out}1InverseWarp.nii.gz ${DIR}InverseWarp.nii.gz
-cp ${out}1Warp.nii.gz ${DIR}1.nii.gz
+cp ${out}0GenericAffine.mat ${DIR}/Affine.mat
+cp ${out}1InverseWarp.nii.gz ${DIR}/InverseWarp.nii.gz
+cp ${out}1Warp.nii.gz ${DIR}/1.nii.gz
 
