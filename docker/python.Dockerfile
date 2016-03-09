@@ -74,12 +74,6 @@ RUN pip install pydicom
 RUN pip install networkx
 RUN pip install tornado
 RUN pip install nibabel
-RUN cd ~/src && \
-  git clone  https://github.com/nipy/nipype.git && \
-  cd nipype && \
-RUN cd ~/src/nipype && \
-  python setup.py
-RUN cd
 RUN pip install nipype
 RUN pip install wget
 ENV OPENBLAS_NUM_THREADS=4
