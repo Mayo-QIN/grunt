@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 from time import time
 import numpy as np
 from sklearn.cluster import KMeans
@@ -19,7 +18,7 @@ def kmeansseg(imageA, imageB,n_clusters=3):
 		imageBdata=imageB_.get_data()
 		imageAdata=(imageAdata-imageAdata.mean())/imageAdata.std()
 		imageBdata=(imageBdata-imageBdata.mean())/imageBdata.std()
-		dim =1
+		dim =2
 		original_image = np.zeros((np.shape(imageAdata)[0], np.shape(imageAdata)[1], np.shape(imageAdata)[2],dim ))
 		original_image[:,:, :,0] = imageAdata.copy()
 		original_image[:,:, :,1] = imageBdata.copy()
