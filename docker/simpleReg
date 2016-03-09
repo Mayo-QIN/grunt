@@ -67,4 +67,11 @@ $reg -d $dim -r [ $f, $m ,1]  \
                         -f 4x2x1 -l 1 -u 1 -z 1 \
                        -o [${out},${out}_diff.nii.gz,${out}_inv.nii.gz]
 
+# this is not the best way to do that, but since ANTs is creating diffrent filenames than the ones grunt is expecting i have to copy the files to correspond to the curl comand. 
+
+1.nii.gz0GenericAffine.mat  1.nii.gz1InverseWarp.nii.gz  1.nii.gz1Warp.nii.gz  1.nii.gz_diff.nii.gz  1.nii.gz_inv.nii.gz  T1c.nii.gz  T2.nii.gz
+
+cp ${out}0GenericAffine.mat Affine.mat
+cp ${out}1InverseWarp.nii.gz InverseWarp.nii.gz
+cp ${out}1Warp.nii.gz 1.nii.gz
 
