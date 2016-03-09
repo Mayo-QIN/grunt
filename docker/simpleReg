@@ -41,9 +41,8 @@ its=1x0x0
 percentage=0.1
 syn="1x0x0,0,5"
 
-
+nm=${D}${nm1}_fixed_${nm2}   # construct output prefix
 echo affine $m $f outname is $nm am using setting $mysetting
-nm=${D}${nm1}_fixed_${nm2}_moving_setting_is_${mysetting}   # construct output prefix
 $reg -d $dim -r [ $f, $m ,1]  \
                         -m mattes[  $f, $m , 1 , 32, regular, $percentage ] \
                          -t translation[ 0.1 ] \
@@ -66,7 +65,6 @@ $reg -d $dim -r [ $f, $m ,1]  \
                          -c [ $syn ]  \
                         -s 1x0.5x0vox  \
                         -f 4x2x1 -l 1 -u 1 -z 1 \
-                       -o [${out},${nm}_diff.nii.gz,${nm}_inv.nii.gz]
+                       -o [${out},${out}_diff.nii.gz,${out}_inv.nii.gz]
 
 
-# ${AP}antsApplyTransforms -d $dim -i $m -r $f -n linear -t ${nm}1Warp.nii.gz -t ${nm}0GenericAffine.mat -o ${out}
