@@ -1,4 +1,4 @@
-FROM centos
+FROM pesscara/grunt
 
 MAINTAINER Panagiotis Korfiatis <korfiatisp@gmail.com>
 
