@@ -1,6 +1,7 @@
 FROM pesscara/grunt
 
 MAINTAINER Panagiotis Korfiatis <korfiatisp@gmail.com>
+USER root
 
 #################################################################################################################
 #			This builds a compute environment for developing medical image analysis applications	#
