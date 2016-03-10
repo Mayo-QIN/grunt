@@ -26,7 +26,7 @@ def kmeansseg(imageA, imageB,n_clusters,output):
 	original_image[:,:, :,1] = imageBdata.copy()
 	X = np.reshape(original_image, (np.shape(
 		original_image)[0] * np.shape(original_image)[1]* np.shape(original_image)[2], dim))
-	k_means = KMeans(float(n_clusters),init='k-means++',n_init=10,n_jobs=1)
+	k_means = KMeans(int(n_clusters),init='k-means++',n_init=10,n_jobs=1)
 	X = StandardScaler().fit_transform(X)
 	k_means.fit(X)
 	k_means_labels = k_means.labels_
