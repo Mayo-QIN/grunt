@@ -81,7 +81,7 @@ RUN pip install chainer
 RUN pip install theano
 RUN pip install keras
 COPY docker/unsuper.gruntfile.yml /grunt/gruntfile.yml
-COPY docker/_kmeansseg _kmeansseg
+COPY docker/_kmeansseg.py _kmeansseg.py
 # What do we run on startup?
 CMD ["/grunt/grunt", "gruntfile.yml"]
 
