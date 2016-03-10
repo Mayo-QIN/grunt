@@ -36,6 +36,7 @@ def kmeansseg(imageA, imageB,n_clusters,output):
 				original_image)[0], np.shape(original_image)[1],np.shape(original_image)[2]))
 		new_image = nib.Nifti1Image((SEGMENTED), affine)
 		nib.save(new_image,output)
+	print (time() - t0)
 	except Exception, e: print e
 	print (time() - t0)
 	return 0
@@ -47,10 +48,10 @@ def main(argv):
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser( description='This file will accept as input a T1 post file and will segment the tumor. Will also require to have the T2 file as well as the ATLAS images it needs')
-	parser.add_argument ( "--imageA",  help="The input filename for image A(Input)" , required=True)
-	parser.add_argument ( "--imageB",  help="The input filename for image B(Input)" , required=True)
-	parser.add_argument ( "--output",  help="The input filename for image B(Input)" , required=True)
-	parser.add_argument ( "--clusternumber",  help="The number of cluster" , required=True)
+	parser.add_argument ("-a", "--imageA",  help="The input filename for image A(Input)" , required=True)
+	parser.add_argument ("-b", "--imageB",  help="The input filename for image B(Input)" , required=True)
+	parser.add_argument ("-o", "--output",  help="The input filename for image B(Input)" , required=True)
+	parser.add_argument ("-n", "--clusternumber",  help="The number of cluster" , required=True)
 	parser.add_argument('--version', action='version', version='%(prog)s 0.1')
 	parser.add_argument("-q", "--quiet",
 						  action="store_false", dest="verbose",
