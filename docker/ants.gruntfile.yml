@@ -7,6 +7,6 @@ services:
   - endPoint: affine
     commandLine: ["./simpleReg", "-f","<fixed","-m", "<moving","-o", ">registered"]
   - endPoint: n4
-    commandLine: ["./n4bias", "-f","<fixed","-o", ">registered"]
+    commandLine: ["./n4bias.sh", "-f","<fixed","-o", ">registered"]
     # commandLine: ["./simpleReg", "-d", "@dimension","-f","<fixed","-m", "<moving","-e", ">registered","-w",">warped", "-i",">inverse"]
 
