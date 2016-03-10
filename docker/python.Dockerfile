@@ -81,6 +81,8 @@ ENV OPENBLAS_NUM_THREADS=4
 RUN pip install chainer
 RUN pip install theano
 RUN pip install keras
+USER grunt
+WORKDIR /grunt
 COPY docker/unsuper.gruntfile.yml /grunt/gruntfile.yml
 COPY docker/_kmeansseg.py _kmeansseg.py
 # What do we run on startup?

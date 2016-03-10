@@ -36,9 +36,8 @@ def kmeansseg(imageA, imageB,n_clusters,output):
 				original_image)[0], np.shape(original_image)[1],np.shape(original_image)[2]))
 		new_image = nib.Nifti1Image((SEGMENTED), affine)
 		nib.save(new_image,output)
-		print (time() - t0)
+		print str((time() - t0))
 	except Exception, e: print e
-	print (time() - t0)
 	return 0
 
 
