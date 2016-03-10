@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 np.random.seed(42)
 
 
-def kmeansseg(imageA, imageB,n_clusters=3):
+def kmeansseg(imageA, imageB,n_clusters,output):
 	t0 = time()
 	try:
 		imageA_=nib.load(imageA)
@@ -35,14 +35,14 @@ def kmeansseg(imageA, imageB,n_clusters=3):
 		SEGMENTED = np.reshape(k_means_labels, (np.shape(
 				original_image)[0], np.shape(original_image)[1],np.shape(original_image)[2]))
 		new_image = nib.Nifti1Image((SEGMENTED), affine)
-		nib.save(new_image,'_cluster.nii.gz')
+		nib.save(new_image,output)
 	except Exception, e: print e
 	print (time() - t0)
 	return 0
 
 
 def main(argv):
-	kmeansseg(argv.imageA,argv.imageB,argv.clusternumber)
+	kmeansseg(argv.imageA,argv.imageB,argv.clusternumber, argv.output)
 	return 0
 
 if __name__ == "__main__":
