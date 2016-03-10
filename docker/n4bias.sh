@@ -23,8 +23,7 @@ done
 shift $((OPTIND-1))
 
 if [[ ! -s $f ]] ; then echo no fixed $f ; exit; fi
-
 reg=${AP}N4BiasFieldCorrection           # path to antsRegistration
-$reg --bspline-fitting [ 300, 5 ] -d 3 --input-image $f --convergence [ 50x50x30x20, 1e-06 ] --output $o --shrink-factor 3
+$reg --bspline-fitting [ 300, 5 ] -d 3 --input-image $f --convergence [ 50x50x30x20, 1e-06 ] --output $out --shrink-factor 3
 
-
+o
