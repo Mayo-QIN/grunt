@@ -16,22 +16,22 @@ def kmeansseg(imageA, imageB,n_clusters,output):
 	affine=imageA_.get_affine()
 	imageB_=nib.load(imageA)
 	imageBdata=imageB_.get_data()
+	imageAdata=imageAdata.astype(np.float)
+	imageBdata=imageBdata.astype(np.float)
 	imageAdata=(imageAdata-imageAdata.mean())/imageAdata.std()
 	imageBdata=(imageBdata-imageBdata.mean())/imageBdata.std()
 	dim =2
 	original_image = np.zeros((np.shape(imageAdata)[0], np.shape(imageAdata)[1], np.shape(imageAdata)[2],dim ))
 	original_image[:,:, :,0] = imageAdata.copy()
 	original_image[:,:, :,1] = imageBdata.copy()
-	# print "Kmeans"
 	X = np.reshape(original_image, (np.shape(
 		original_image)[0] * np.shape(original_image)[1]* np.shape(original_image)[2], dim))
-	k_means = KMeans(float(n_clusters),init='k-means++',  n_init=10,n_jobs=-1)
+	k_means = KMeans(float(n_clusters),init='k-means++',n_init=10,n_jobs=1)
 	X = StandardScaler().fit_transform(X)
 	k_means.fit(X)
 	k_means_labels = k_means.labels_
 	k_means_cluster_centers = k_means.cluster_centers_
 	k_means_labels_unique = np.unique(k_means_labels)
-	# logger.info("K-means just finished")
 	SEGMENTED = np.reshape(k_means_labels, (np.shape(
 			original_image)[0], np.shape(original_image)[1],np.shape(original_image)[2]))
 	new_image = nib.Nifti1Image((SEGMENTED), affine)
