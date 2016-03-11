@@ -17,6 +17,8 @@ Makefile for grunt
   demo		 - build a docker that offers basic example
   
   ants		 - build a docker that is aimed to registration utilizig ANTs
+
+  machinelearn
   
   tools      - run 'go get' to install missing tools
 
