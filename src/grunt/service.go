@@ -9,7 +9,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -119,8 +118,14 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 	}
 
 	cl := make([]string, 0)
-	// Make a temp directory
-	dir, err := ioutil.TempDir("", job.UUID)
+	// Make a working directory
+	dir := filepath.Join(config.Directory, service.EndPoint, job.UUID)
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		log.Printf("Error making working directory: %v", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	for _, arg := range service.CommandLine {
 		log.Printf("Parsing %v", arg)
 		// Do we start with an @?
