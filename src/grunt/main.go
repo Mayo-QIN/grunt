@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 type SMTP struct {
@@ -24,6 +25,7 @@ type Config struct {
 	ServiceMap map[string]*Service `json:omit`
 	Mail       SMTP
 	Server     string
+	Directory  string
 }
 
 var config Config
@@ -55,6 +57,16 @@ func main() {
 	}
 	if config.Mail.From == "" {
 		config.Mail.From = "noreply@example.com"
+	}
+	if config.Directory == "" {
+		config.Directory, err = ioutil.TempDir("", "grunt")
+		if err != nil {
+			log.Fatalf("Failed to make working directory: %v", err.Error())
+		}
+	}
+	err = os.MkdirAll(config.Directory, 0755)
+	if err != nil {
+		log.Fatalf("Failed to make working directory: %v", err.Error())
 	}
 
 	// Expose the endpoints
