@@ -25,56 +25,43 @@ curl -v -X POST --form fixed=@T1c.nii.gz --form registered=1.nii.gz ril-gpu10:99
 
 
 """
-import requests
-servername='http://ril-gpu10:9919'
-location="/Users/m112447/Downloads/"
+from _grunt import grunt
 
-
-# Bias
-ServiceContactPoint_1=servername+"/rest/service/n4"
+# N4 T1c
+adress='http://ril-gpu10:9919'
+storelocation="/Users/m112447/Downloads/"
+service="/rest/service/n4"
 files = {'fixed': open('/Users/m112447/Documents/TestData/T1c.nii.gz', 'rb')}
-values = {'registered': 'T1cN4.nii.gz'}
-r = requests.post(ServiceContactPoint_1, files=files, data=values)
-print dir(r)
-print r.json()
-ConnObject=r.json()
-print ConnObject.get('uuid')
-r = requests.get(servername+'/rest/job/wait/'+ConnObject.get('uuid'))
-r1 = requests.get( servername+'/rest/job/'+ConnObject.get('uuid')+'/file/registered')
-with open( location+values.get('registered'), "wb") as code:
-    code.write(r1.content)
-print 'Done'
-ServiceContactPoint_1=servername+"/rest/service/n4"
-files = {'fixed': open('/Users/m112447/Documents/TestData/T2.nii.gz', 'rb')}
-values = {'registered': 'T2N4.nii.gz'}
-r = requests.post(ServiceContactPoint_1, files=files, data=values)
-print dir(r)
-print r.json()
-ConnObject=r.json()
-print ConnObject.get('uuid')
-r = requests.get(servername+'/rest/job/wait/'+ConnObject.get('uuid'))
-r1 = requests.get( servername+'/rest/job/'+ConnObject.get('uuid')+'/file/registered')
-with open( location+values.get('registered'), "wb") as code:
-    code.write(r1.content)
-print 'Done'
-#Register 
-ServiceContactPoint_1=servername+"/rest/service/affine"
-files = {'fixed': open(location+'/T1cN4.nii.gz', 'rb'),'moving': open(location+'/T2N4.nii.gz', 'rb')}
-values = {'registered': 't2regi.nii.gz'}
-r = requests.post(ServiceContactPoint_1, files=files, data=values)
-r = requests.get(servername+'/rest/job/wait/'+ConnObject.get('uuid'))
-r1 = requests.get( servername+'/rest/job/'+ConnObject.get('uuid')+'/file/registered')
-with open( location+values.get('registered'), "wb") as code:
-    code.write(r1.content)
-# Segment
-servername='http://ril-gpu10:9916'
-ServiceContactPoint_1=servername+"/rest/service/kmeansseg"
-files = {'fixed': open(location+'/T1cN4.nii.gz', 'rb'),'moving': open(location+'/t2regi.nii.gz', 'rb')}
-values = {'output': 'cluster.nii.gz','clusternumber':6}
-r = requests.post(ServiceContactPoint_1, files=files, data=values)
-r = requests.get(servername+'/rest/job/wait/'+ConnObject.get('uuid'))
-r1 = requests.get( servername+'/rest/job/'+ConnObject.get('uuid')+'/file/output')
-with open( location+values.get('registered'), "wb") as code:
-    code.write(r1.content)
+param = {'registered': 'T1cN4.nii.gz'}
+n4 = grunt(adress,param,files,storelocation, service)
+n4.submitjob()
+n4.jobstatus()
+n4.download()
+#N4 T2
+n4.files = {'fixed': open('/Users/m112447/Documents/TestData/T2.nii.gz', 'rb')}
+n4.param = {'registered': 'T2N4.nii.gz'}
+n4.submitjob()
+n4.jobstatus()
+n4.download()
+# Register T1 and T2
+adress='http://ril-gpu10:9919'
+storelocation="/Users/m112447/Downloads/"
+service="/rest/service/affine"
+files = {'fixed': open('/Users/m112447/Downloads/T1cN4.nii.gz', 'rb'),'moving': open('/Users/m112447/Downloads/T2N4.nii.gz', 'rb')}
+param = {'registered': 't2regi.nii.gz'}
+regi = grunt(adress,param,files,storelocation, service)
+regi.submitjob()
+regi.jobstatus()
+regi.download()
+# Apply clustering 
+adress='http://ril-gpu10:9916'
+storelocation="/Users/m112447/Downloads/"
+service="/rest/service/kmeansseg"
+files = {'imageA': open('/Users/m112447/Downloads/T1cN4.nii.gz', 'rb'),'imageB': open('/Users/m112447/Downloads/t2regi.nii.gz', 'rb')}
+param = {'output': 'cluster.nii.gz','clusternumber':6}
+kmean = grunt(adress,param,files,storelocation, service)
+kmean.submitjob()
+kmean.jobstatus()
+kmean.download()
 
 
