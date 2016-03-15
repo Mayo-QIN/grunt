@@ -50,6 +50,7 @@ func main() {
 		log.Fatalf("Error in YML parsing: %v", err)
 	}
 	for _, service := range config.Services {
+		service.setup()
 		config.ServiceMap[service.EndPoint] = service
 	}
 	if config.Mail.Port == 0 {

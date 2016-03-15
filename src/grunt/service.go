@@ -22,16 +22,20 @@ var jobMutex sync.Mutex
 var jobs = make(map[string]*Job)
 
 type Service struct {
-	EndPoint    string            `yaml:"endPoint" json:"endPoint"`
-	CommandLine []string          `yaml:"commandLine" json:"commandLine"`
+	EndPoint    string            `yaml:"endPoint" json:"end_point"`
+	CommandLine []string          `yaml:"commandLine" json:"command_line"`
 	Description string            `json:"description"`
-	Defaults    map[string]string `yaml:defaults json:defaults`
+	Defaults    map[string]string `yaml:defaults json:"defaults"`
+	Arguments   []string          `json:"arguments"`
+	Parameters  []string          `json:"parameters"`
+	InputFiles  []string          `json:"input_files"`
+	OutputFiles []string          `json:"output_files"`
 }
 
 type Job struct {
 	sync.Mutex        `json:ignore`
 	UUID              string            `json:"uuid"`
-	CommandLine       []string          `yaml:"commandLine" json:"commandLine"`
+	CommandLine       []string          `yaml:"commandLine" json:"command_line"`
 	ParsedCommandLine []string          `json:"-"`
 	FileMap           map[string]string `json:"-"`
 	StartTime         time.Time         `json:"start_time"`
@@ -46,6 +50,35 @@ type Job struct {
 	// Running process
 	cmd    *exec.Cmd
 	Output bytes.Buffer `json:"output"`
+}
+
+// Parse our argements
+func (service *Service) setup() *Service {
+	service.Arguments = make([]string, 0)
+	service.Parameters = make([]string, 0)
+	service.InputFiles = make([]string, 0)
+	service.OutputFiles = make([]string, 0)
+	for _, arg := range service.CommandLine {
+		log.Printf("Parsing %v", arg)
+		// Do we start with an @?
+		key := arg[1:]
+		prefix := arg[0]
+		isArg := false
+		if prefix == '@' {
+			isArg = true
+			service.Parameters = append(service.Arguments, key)
+		} else if prefix == '<' {
+			isArg = true
+			service.InputFiles = append(service.InputFiles, key)
+		} else if prefix == '>' {
+			isArg = true
+			service.OutputFiles = append(service.OutputFiles, key)
+		}
+		if isArg {
+			service.Arguments = append(service.Arguments, key)
+		}
+	}
+	return service
 }
 
 func Template(name string, data map[string]interface{}, w http.ResponseWriter, request *http.Request) {
