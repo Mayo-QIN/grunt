@@ -71,12 +71,14 @@ RUN pip install pandas
 RUN pip install argparse
 RUN pip install pydicom
 RUN pip install networkx
+RUN pip install seaborn
 RUN pip install tornado
 RUN pip install nibabel
 # RUN pip install nipype
 RUN pip install wget
 ENV OPENBLAS_NUM_THREADS=4
 RUN pip install chainer
+RUN pip install openpyxl
 RUN pip install theano
 RUN pip install keras
 USER grunt

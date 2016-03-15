@@ -6,8 +6,6 @@ import argparse
 import nibabel as nib
 from sklearn.preprocessing import StandardScaler
 np.random.seed(42)
-
-
 def kmeansseg(imageA, imageB,n_clusters,output):
 	t0 = time()
 	# try:

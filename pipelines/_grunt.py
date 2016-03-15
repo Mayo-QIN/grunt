@@ -26,7 +26,7 @@ class grunt(object):
 		self.r=r
 		return 0
 
-	def jobstatus(self):
+	def waitforcompletion(self):
 		robj=self.r
 		ConnObject=robj.json()
 		status = requests.get(self.adress+'/rest/job/wait/'+ConnObject.get('uuid'))

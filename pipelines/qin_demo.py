@@ -35,13 +35,13 @@ files = {'fixed': open('/Users/m112447/Documents/TestData/T1c.nii.gz', 'rb')}
 param = {'registered': 'T1cN4.nii.gz'}
 n4 = grunt(adress,param,files,storelocation, service)
 n4.submitjob()
-n4.jobstatus()
+n4.waitforcompletion()
 n4.download()
 #N4 T2
 n4.files = {'fixed': open('/Users/m112447/Documents/TestData/T2.nii.gz', 'rb')}
 n4.param = {'registered': 'T2N4.nii.gz'}
 n4.submitjob()
-n4.jobstatus()
+n4.waitforcompletion()
 n4.download()
 # Register T1 and T2
 adress='http://ril-gpu10:9919'
@@ -51,7 +51,7 @@ files = {'fixed': open('/Users/m112447/Downloads/T1cN4.nii.gz', 'rb'),'moving': 
 param = {'registered': 't2regi.nii.gz'}
 regi = grunt(adress,param,files,storelocation, service)
 regi.submitjob()
-regi.jobstatus()
+regi.waitforcompletion()
 regi.download()
 # Apply clustering 
 adress='http://ril-gpu10:9916'
@@ -61,7 +61,7 @@ files = {'imageA': open('/Users/m112447/Downloads/T1cN4.nii.gz', 'rb'),'imageB':
 param = {'output': 'cluster.nii.gz','clusternumber':6}
 kmean = grunt(adress,param,files,storelocation, service)
 kmean.submitjob()
-kmean.jobstatus()
+kmean.waitforcompletion()
 kmean.download()
 
 
