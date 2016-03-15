@@ -262,12 +262,14 @@ func GetJob(w http.ResponseWriter, request *http.Request) {
 func WaitForJob(w http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	job := jobs[vars["id"]]
-	c := make(chan bool)
-	job.Lock()
-	job.waiters = append(job.waiters, c)
-	job.Unlock()
-	<-c
-	close(c)
+	if job.Status == "running" {
+		c := make(chan bool)
+		job.Lock()
+		job.waiters = append(job.waiters, c)
+		job.Unlock()
+		<-c
+		close(c)
+	}
 	json.NewEncoder(w).Encode(job)
 }
 
