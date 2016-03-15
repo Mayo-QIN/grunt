@@ -93,16 +93,22 @@ def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
     return plt
 
 
-def plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
-	plt.imshow(cm, interpolation='nearest', cmap=cmap)
-	plt.title(title)
-	plt.colorbar()
-	tick_marks = np.arange(2)
-	plt.xticks(tick_marks, ["Class1","Class2"], rotation=45)
-	plt.yticks(tick_marks, ["Class1","Class2"])
-	plt.tight_layout()
-	plt.ylabel('True label')
-	plt.xlabel('Predicted label')
+def plot_confusion_matrix(y_test, pred):
+	labels = ['Class1', 'Class1']
+	cm = confusion_matrix(y_test, pred, labels)
+	print(cm)
+	fig = plt.figure()
+	ax = fig.add_subplot(111)
+	cax = ax.matshow(cm)
+	plt.title('Confusion matrix of the classifier')
+	fig.colorbar(cax)
+	ax.set_xticklabels([''] + labels)
+	ax.set_yticklabels([''] + labels)
+	plt.xlabel('Predicted')
+	plt.ylabel('True')
+	plt.show()
+
+
 
 
 def calibrationplot(X_train,X_test,y_train,y_test,filesavename='calibrationplot.pdf'):
@@ -248,7 +254,7 @@ def machinelearningpipeline(datset,output='results.zip'):
 	# Draw heatmap of the validation accuracy as a function of gamma and C
 	plt.figure(figsize=(8, 6))
 	plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
-	plt.imshow(scores, interpolation='nearest', cmap=plt.cm.hot)
+	plt.imshow(scores, interpolation='nearest', cmap=plt.cm.jet)
 	plt.xlabel('gamma')
 	plt.ylabel('C')
 	plt.colorbar()
@@ -314,7 +320,7 @@ def machinelearningpipeline(datset,output='results.zip'):
 	print('Normalized confusion matrix')
 	print(cm_normalized)
 	plt.figure()
-	plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
+	plot_confusion_matrix(y_test, y_pred)
 	plt.savefig('ConfusionMatrixSVM.pdf', tight_layout=True, dpi = 600)
 	return 0
 url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/pima-indians-diabetes/pima-indians-diabetes.data'
