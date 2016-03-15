@@ -14,8 +14,8 @@
 # curl -X POST  -v --form Message=hi localhost:9901/rest/service/echo
 
 # copy takes input and output files.  <in must be provided
-# curl -X POST  -v --form in=@README.md --form out=R.md localhost:9901/rest/service/copy
-# NB: "--form in=@README.md" indicates that curl should send README.md as the form parameter "in"
+# curl -X POST  -v --form in=@README.md --form output=R.md localhost:9901/rest/service/copy
+# NB: "--form input=@README.md" indicates that curl should send README.md as the form parameter "input"
 #     and the output filename is set to "R.md"
 #
 # to retrieve the output data, first find the UUID in the response, and request the file
@@ -25,7 +25,7 @@
 # Here is the copy example using jq(http://stedolan.github.io/jq/) to help a bit
 # 
 # id=`curl --silent -X POST --form in=@README.md --form out=small_file.txt localhost:9901/rest/service/copy | jq -r .uuid`
-# wget --content-disposition localhost:9901/rest/job/$id/file/out
+# wget --content-disposition localhost:9901/rest/job/$id/file/output
 
 
 # This is the hostname:port that the server is running on.
@@ -56,5 +56,5 @@ services:
     defaults:
       seconds: 300
   - endPoint: copy
-    commandLine: ["cp", "<in", ">out"]
+    commandLine: ["cp", "<input", ">output"]
     description: copy a file
