@@ -44,9 +44,7 @@ class job(object):
                 print 'done'
             except Exception, e: print e
 
-    
-
-    
+       
 class endpoint(object):
     """
     Manage an endpoint
