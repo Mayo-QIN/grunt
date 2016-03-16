@@ -25,54 +25,47 @@ curl -v -X POST --form fixed=@T1c.nii.gz --form registered=1.nii.gz ril-gpu10:99
 
 
 """
-from _grunt import job,endpoint
+from _grunt import job,endpoint,grunt
 
-adress='http://ril-gpu10:9919'
-storelocation="/Users/m112447/Downloads/"
-service="n4"
-files = {'fixed': open('/Users/m112447/Documents/TestData/T1c.nii.gz', 'rb')}
-param = {'registered': 'T1cN4.nii.gz'}
-e = endpoint(adress, service)
-j = e(input='/Users/m112447/Documents/TestData/T1c.nii.gz',output=storelocation+'/T1cN4.nii.gz',parameters='')
-print j.status()
+g = grunt("http://ril-gpu10:9919")
+print dir(g.services.get('n4'))
+Info=g.services.get('n4')
+print Info.inputs()
+print Info.outputs()
+print Info.parameters()
+j = g.n4(fixed="/Users/m112447/Documents/TestData/T2.nii.gz",registered="T2N4.nii.gz")
+print dir(j)
 j.wait()
-j.save_output("output", "/tmp/")
+j.save_output("registered", "/Users/m112447/Downloads/")
+j = g.n4(fixed="/Users/m112447/Documents/TestData/T1c.nii.gz",registered="T1cN4.nii.gz")
+print dir(j)
+j.wait()
+
+j.wait()
+j.save_output("registered", "/Users/m112447/Downloads/")
 
 
-# adress='http://ril-gpu10:9919'
-# storelocation="/Users/m112447/Downloads/"
-# service="/rest/service/n4"
-# files = {'fixed': open('/Users/m112447/Documents/TestData/T1c.nii.gz', 'rb')}
-# param = {'registered': 'T1cN4.nii.gz'}
-# n4 = grunt(adress,param,files,storelocation, service)
-# n4.submitjob()
-# n4.waitforcompletion()
-# n4.download()
-# #N4 T2
-# n4.files = {'fixed': open('/Users/m112447/Documents/TestData/T2.nii.gz', 'rb')}
-# n4.param = {'registered': 'T2N4.nii.gz'}
-# n4.submitjob()
-# n4.waitforcompletion()
-# n4.download()
-# # Register T1 and T2
-# adress='http://ril-gpu10:9919'
-# storelocation="/Users/m112447/Downloads/"
-# service="/rest/service/affine"
-# files = {'fixed': open('/Users/m112447/Downloads/T1cN4.nii.gz', 'rb'),'moving': open('/Users/m112447/Downloads/T2N4.nii.gz', 'rb')}
-# param = {'registered': 't2regi.nii.gz'}
-# regi = grunt(adress,param,files,storelocation, service)
-# regi.submitjob()
-# regi.waitforcompletion()
-# regi.download()
-# # Apply clustering 
-# adress='http://ril-gpu10:9916'
-# storelocation="/Users/m112447/Downloads/"
-# service="/rest/service/kmeansseg"
-# files = {'imageA': open('/Users/m112447/Downloads/T1cN4.nii.gz', 'rb'),'imageB': open('/Users/m112447/Downloads/t2regi.nii.gz', 'rb')}
-# param = {'output': 'cluster.nii.gz','clusternumber':6}
-# kmean = grunt(adress,param,files,storelocation, service)
-# kmean.submitjob()
-# kmean.waitforcompletion()
-# kmean.download()
+# Register T1 and T2
+print dir(g.services.get('affine'))
+Info=g.services.get('affine')
+print Info.inputs()
+print Info.outputs()
+print Info.parameters()
+j = g.affine(fixed="/Users/m112447/Downloads/T1cN4.nii.gz",moving='/Users/m112447/Downloads/T2N4.nii.gz',registered="T2regi.nii.gz")
+print dir(j)
+j.wait()
+j.save_output("registered", "/Users/m112447/Downloads/")
 
+
+# Kmeans
+g = grunt("http://ril-gpu10:9916")
+print dir(g.services.get('kmeansseg'))
+Info=g.services.get('kmeansseg')
+print Info.inputs()
+print Info.outputs()
+print Info.parameters()
+j = g.kmeansseg(imageA="/Users/m112447/Downloads/T1cN4.nii.gz",imageB='/Users/m112447/Downloads/t2regi.nii.gz',clusternumber=6,output="Cluster.nii.gz")
+print dir(j)
+j.wait()
+j.save_output("output", "/Users/m112447/Downloads/")
 

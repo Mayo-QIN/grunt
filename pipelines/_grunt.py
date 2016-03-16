@@ -122,17 +122,13 @@ class grunt(object):
 			return 0  
 
 
-# n4 = webappserver(address,param,files,storelocation, service)
-
-if __name__ == "__main__":
-
-    g = grunt("http://localhost:9901")
-    j = g.copy(input="README.md",output="Copy of README.md")
-    j.wait()
-
-    g.echo(Message='Hi from grunt')
-    j.wait()
-    j.save_output("output", "/tmp/")
+# if __name__ == "__main__":
+#     g = grunt("http://localhost:9901")
+#     j = g.copy(input="README.md",output="Copy of README.md")
+#     j.wait()
+#     g.echo(Message='Hi from grunt')
+#     j.wait()
+#     j.save_output("output", "/tmp/")
 
     
     # e = endpoint("http://localhost:9901", "copy")
