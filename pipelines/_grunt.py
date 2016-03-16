@@ -53,6 +53,21 @@ class endpoint(object):
         self.address = address
         self.endpoint = endpoint
         self.json = requests.get(self.url()).json()
+        self.values={}
+
+    def __setattr__(self,key,value):
+        print '--------'
+        print (key, value)
+        """Maps attributes to values.
+        Only if we are initialised
+        """
+        # if not self.values.has_key('_attrExample__initialised'):  # this test allows attributes to be set in the __init__ method
+        #     return values.__setattr__(self, key, value)
+        # elif self.values.has_key(key):       # any normal attributes are handled normally
+        #     values.__setattr__(self, key, value)
+        # else:
+        object.__setattr__(self,key, value)
+
     def parameters(self):
         return self.json['parameters']
     def inputs(self):
@@ -64,16 +79,42 @@ class endpoint(object):
 
     def __call__(self,**kwargs):
         j = job(self)
-        print (kwargs)
-        for k,v in kwargs.iteritems():
-            if k in self.parameters():
-                j.data[k] = v
-            if k in self.inputs():
-                j.files[k] = open(v,'rb')
-            if k in self.outputs():
-                j.data[k] = v
-        j.call(j.data, j.files)
-        return j
+        # print (kwargs)
+        if kwargs:
+            for k,v in kwargs.iteritems():
+                print k,v
+                if k in self.parameters():
+                    j.data[k] = v
+                if k in self.inputs():
+                    j.files[k] = open(v,'rb')
+                if k in self.outputs():
+                    j.data[k] = v
+            j.call(j.data, j.files)
+            return j
+        else:
+            if self.parameters():
+                for i in self.parameters():                   
+                    if hasattr(self, i):
+                        print 'parameter------ found'
+                        j.data[i] = getattr(self,i)
+                        print i
+            if self.inputs():
+                for i in self.inputs():                  
+                    if hasattr(self, i):
+                        print 'parameter------ found'
+                        j.files[i] = open(getattr(self,i),'rb')
+
+                        print i
+            if self.outputs():
+                for i in self.outputs():
+                    if hasattr(self, i):
+                        print 'inputs------ found'
+                        j.data[i] = getattr(self,i)
+
+                        print i
+            j.call(j.data, j.files)
+            return j
+
 
 
 class grunt(object):

@@ -28,19 +28,17 @@ curl -v -X POST --form fixed=@T1c.nii.gz --form registered=1.nii.gz ril-gpu10:99
 from _grunt import job,endpoint,grunt
 
 g = grunt("http://ril-gpu10:9919")
-print dir(g.services.get('n4'))
-Info=g.services.get('n4')
-print Info.inputs()
-print Info.outputs()
-print Info.parameters()
-j = g.n4(fixed="/Users/m112447/Documents/TestData/T2.nii.gz",registered="T2N4.nii.gz")
-print dir(j)
+
+j=g.n4
+j.fixed="/Users/m112447/Documents/TestData/T2.nii.gz"
+j.registered="T2N4.nii.gz"
+j = g.n4()
 j.wait()
 j.save_output("registered", "/Users/m112447/Downloads/")
+
+
 j = g.n4(fixed="/Users/m112447/Documents/TestData/T1c.nii.gz",registered="T1cN4.nii.gz")
 print dir(j)
-j.wait()
-
 j.wait()
 j.save_output("registered", "/Users/m112447/Downloads/")
 
@@ -57,7 +55,7 @@ j.wait()
 j.save_output("registered", "/Users/m112447/Downloads/")
 
 
-# Kmeans
+# # Kmeans
 g = grunt("http://ril-gpu10:9916")
 print dir(g.services.get('kmeansseg'))
 Info=g.services.get('kmeansseg')
