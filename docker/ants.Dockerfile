@@ -25,6 +25,8 @@ RUN make -j8
 RUN echo export PATH=/tmp/bin:\$PATH >> ~/.bashrc
 RUN echo export ANTSPATH=${ANTSPATH:="/tmp/bin"} >> ~/.bashrc
 # copy .yml file as well te script to run. Need to modify so it works.
+RUN groupadd -r grunt && useradd -r -g grunt grunt
+WORKDIR /grunt
 USER grunt
 WORKDIR /grunt
 COPY docker/ants.gruntfile.yml /grunt/gruntfile.yml
