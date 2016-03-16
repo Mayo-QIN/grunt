@@ -26,11 +26,11 @@ RUN echo export PATH=/tmp/bin:\$PATH >> ~/.bashrc
 RUN echo export ANTSPATH=${ANTSPATH:="/tmp/bin"} >> ~/.bashrc
 # copy .yml file as well te script to run. Need to modify so it works.
 USER grunt
+WORKDIR /.grunt-tmp
 WORKDIR /grunt
 COPY docker/ants.gruntfile.yml /grunt/gruntfile.yml
 COPY docker/simpleReg simpleReg
 COPY docker/n4bias.sh n4bias.sh
-WORKDIR /.grunt-tmp
 
 # What do we run on startup?
 CMD ["/grunt/grunt", "gruntfile.yml"]
