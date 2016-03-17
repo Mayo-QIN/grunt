@@ -75,5 +75,9 @@ DIR=$(dirname "${VAR}")
 echo "${DIR}"
 cp ${out}0GenericAffine.mat ${DIR}/Affine.mat
 cp ${out}1InverseWarp.nii.gz ${DIR}/InverseWarp.nii.gz
-cp ${out}_diff.nii.gz ${DIR}/1.nii.gz
+cp ${out}_diff.nii.gz ${DIR}/${out}
 
+
+echo ${DIR}/Affine.mat
+echo ${DIR}/InverseWarp.nii.gz
+echo ${DIR}/${out}
