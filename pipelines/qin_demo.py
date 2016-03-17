@@ -25,34 +25,56 @@ curl -v -X POST --form fixed=@T1c.nii.gz --form registered=1.nii.gz ril-gpu10:99
 
 
 """
-from _grunt import job,endpoint,grunt
+from _grunt import *
 
 g = grunt("http://ril-gpu10:9919")
 
-j=g.n4
-j.fixed="/Users/m112447/Documents/TestData/T2.nii.gz"
-j.registered="T2N4.nii.gz"
-j = g.n4()
-j.wait()
-j.save_output("registered", "/Users/m112447/Downloads/")
+# But the code 
+
+# Create an affine registration proxy for the grunt service
+affine = g.affine
+
+# Set parameters
+affine.moving="/Users/m112447/Downloads/T2N4.nii.gz"
+affine.fixed="/Users/m112447/Downloads/T1cN4.nii.gz"
+affine.registered="T2reg.nii.gz"
+
+# Don't need this
+# affine = g.affine()
+
+# Call the method
+job = affine()
+job.wait()
+
+# Write some output
+job.save_output("registered", "/Users/m112447/Downloads/")
 
 
-j = g.n4(fixed="/Users/m112447/Documents/TestData/T1c.nii.gz",registered="T1cN4.nii.gz")
-print dir(j)
-j.wait()
-j.save_output("registered", "/Users/m112447/Downloads/")
+
+# j=g.n4
+# j.fixed="/Users/m112447/Documents/TestData/T2.nii.gz"
+# j.registered="T2N4.nii.gz"
+# j = g.n4()
+# j.wait()
+# j.save_output("registered", "/Users/m112447/Downloads/")
 
 
-# Register T1 and T2
-print dir(g.services.get('affine'))
-Info=g.services.get('affine')
-print Info.inputs()
-print Info.outputs()
-print Info.parameters()
-j = g.affine(fixed="/Users/m112447/Downloads/T1cN4.nii.gz",moving='/Users/m112447/Downloads/T2N4.nii.gz',registered="T2regi.nii.gz")
-print dir(j)
-j.wait()
-j.save_output("registered", "/Users/m112447/Downloads/")
+# j = g.n4(fixed="/Users/m112447/Documents/TestData/T1c.nii.gz",registered="T1cN4.nii.gz")
+# print dir(j)
+# j.wait()
+# j.save_output("registered", "/Users/m112447/Downloads/")
+
+
+# # # Register T1 and T2
+# # print dir(g.services.get('affine'))
+# # Info=g.services.get('affine')
+# # print Info.inputs()
+# # print Info.outputs()
+# # print Info.parameters()
+# # j = g.affine(fixed="/Users/m112447/Downloads/T1cN4.nii.gz",moving='/Users/m112447/Downloads/T2N4.nii.gz',registered="T2regi.nii.gz")
+# # print dir(j)
+# # j.wait()
+# # j.save_output("registered", "/Users/m112447/Downloads/")
 
 
 # # Kmeans
@@ -62,7 +84,7 @@ Info=g.services.get('kmeansseg')
 print Info.inputs()
 print Info.outputs()
 print Info.parameters()
-j = g.kmeansseg(imageA="/Users/m112447/Downloads/T1cN4.nii.gz",imageB='/Users/m112447/Downloads/t2regi.nii.gz',clusternumber=6,output="Cluster.nii.gz")
+j = g.kmeansseg(imageA="/Users/m112447/Downloads/T1cN4.nii.gz",imageB='/Users/m112447/Downloads/T1cN4.nii.gz',clusternumber=6,output="Cluster.nii.gz")
 print dir(j)
 j.wait()
 j.save_output("output", "/Users/m112447/Downloads/")
