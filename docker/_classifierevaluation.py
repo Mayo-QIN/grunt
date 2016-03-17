@@ -30,6 +30,10 @@ from sklearn import cross_validation
 from sklearn.learning_curve import learning_curve
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
+import glob
+import shutil
+import os
+
 np.random.seed(42)
 
 
@@ -171,12 +175,11 @@ def corplot(X,filesavename='all.pdf'):
 def machinelearningpipeline(datset,output='results.zip'):
 	t0 = time()
 	# dataset = pd.read_csv(datset)
-
-
 	# TODO have to create a new proper CSV
 	col_names = ['pregnant', 'glucose', 'bp', 'skin', 'insulin', 'bmi', 'pedigree', 'age', 'label']
 	dataset = pd.read_csv(datset, header=None, names=col_names)
-	# dataset=dataset[1:200]
+	dataset.to_csv('diab.csv')
+	dataset=dataset[1:200]
 	# DO feature evaluation and write a xlsx file. 
 	wb = Workbook()
 	ws1 = wb.active
@@ -269,7 +272,6 @@ def machinelearningpipeline(datset,output='results.zip'):
 	scores = ['roc_auc']#['precision_weighted', 'recall_weighted','roc_auc']
 	Random_plot=[]
 	tuned_parameters = [{'n_estimators': [1,10,20,30,40,50,60,70,80,90,100,200,300,400,500,600,700,800,900,1000]}]
-
 	for score in scores:
 		print("# Tuning hyper-parameters for %s" % score)
 		print()
@@ -322,7 +324,25 @@ def machinelearningpipeline(datset,output='results.zip'):
 	plt.figure()
 	plot_confusion_matrix(y_test, y_pred)
 	plt.savefig('ConfusionMatrixSVM.pdf', tight_layout=True, dpi = 600)
+	# os.chdir(os.getcwd())
+	# for file in glob.glob("*.pdf"):
+	#     print(file)
+	# shutisl.make_archive(output_filename, 'zip', dir_name)
+	path_=os.getcwd()
+	directory=path_+'/output/'
+	if not os.path.exists(directory):
+	    os.makedirs(directory)
+
+	types = ('*.pdf', '*.csv','*.xlsx') # the tuple of file types
+	files_grabbed = []
+	for files in types:
+	    files_grabbed.extend(glob.glob(files))
+	for file in files_grabbed:
+	    if os.path.isfile(file):
+	        shutil.copy2(file, directory)	
+	shutil.make_archive(output, 'zip', directory)
 	return 0
+
 url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/pima-indians-diabetes/pima-indians-diabetes.data'
 machinelearningpipeline(url)
 # def main(argv):
