@@ -172,14 +172,10 @@ def corplot(X,filesavename='all.pdf'):
 	# Generate a custom diverging colormap
 	fig.tight_layout()
 	plt.savefig(filesavename, dpi = 300)
-def machinelearningpipeline(datset,output='results.zip'):
+def machinelearningpipeline(datset,output='results'):
 	t0 = time()
-	# dataset = pd.read_csv(datset)
-	# TODO have to create a new proper CSV
-	col_names = ['pregnant', 'glucose', 'bp', 'skin', 'insulin', 'bmi', 'pedigree', 'age', 'label']
-	dataset = pd.read_csv(datset, header=None, names=col_names)
-	dataset.to_csv('diab.csv')
-	dataset=dataset[1:200]
+	dataset = pd.read_csv(datset)
+	dataset.to_csv(output+'.csv')
 	# DO feature evaluation and write a xlsx file. 
 	wb = Workbook()
 	ws1 = wb.active
@@ -192,7 +188,8 @@ def machinelearningpipeline(datset,output='results.zip'):
 	ws1.cell(column=5, row=1).value='Specificity'
 	ws1.cell(column=6, row=1).value='Confidence interval: low'
 	ws1.cell(column=7, row=1).value='Confidence interval: high'
-	for imagebiom in col_names:
+	Collumnheadeers=list(dataset.columns.values)
+	for imagebiom in Collumnheadeers:
 		ValuesMetric= dataset[imagebiom].values
 		Targets= dataset['label'].values
 		roc_auc_score, optimalval, sens,spec, confidence_lower, confidence_upper=analyticscalc(ValuesMetric,Targets,imagebiom)
@@ -206,7 +203,6 @@ def machinelearningpipeline(datset,output='results.zip'):
 		rownum+=1
 	wb.save(filename = 'ResultTableIndividualFeature.xlsx')
 	print dataset
-	Collumnheadeers=list(dataset.columns.values)
 	print Collumnheadeers
 	# Create and save correlation plots. 
 	## Get labels
@@ -343,20 +339,19 @@ def machinelearningpipeline(datset,output='results.zip'):
 	shutil.make_archive(output, 'zip', directory)
 	return 0
 
-url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/pima-indians-diabetes/pima-indians-diabetes.data'
-machinelearningpipeline(url)
-# def main(argv):
-# 	machinelearningpipeline(argv.datset, argv.output)
-# 	return 0
 
-# if __name__ == "__main__":
-# 	parser = argparse.ArgumentParser( description='Machine learning analysis pipeline')
-# 	parser.add_argument ("-d", "--datset",  help="dataset (csv type)" , required=True)
-# 	parser.add_argument ("-o", "--output",  help="output name of zip file" , required=True)
-# 	parser.add_argument('--version', action='version', version='%(prog)s 0.1')
-# 	parser.add_argument("-q", "--quiet",
-# 						  action="store_false", dest="verbose",
-# 						  default=True,
-# 						  help="don't print status messages to stdout")
-# 	args = parser.parse_args()
-# 	main(args)
+def main(argv):
+	machinelearningpipeline(argv.datset, argv.output)
+	return 0
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser( description='Machine learning analysis pipeline')
+	parser.add_argument ("-i", "--datset",  help="dataset (csv type)" , required=True)
+	parser.add_argument ("-o", "--output",  help="output name of zip file" , required=True)
+	parser.add_argument('--version', action='version', version='%(prog)s 0.1')
+	parser.add_argument("-q", "--quiet",
+						  action="store_false", dest="verbose",
+						  default=True,
+						  help="don't print status messages to stdout")
+	args = parser.parse_args()
+	main(args)

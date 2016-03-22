@@ -25,10 +25,12 @@ class job(object):
 		return self.job_status
 
 	def wait(self):
-		print ('---------'*9)
-		print self.json['uuid']
-		self.job_status = requests.get(self.endpoint.address + "/rest/job/wait/" + self.json['uuid'])
-		return self.job_status
+		status=[]
+		while status!='success':
+			self.job_status_json= requests.get(self.endpoint.address + "/rest/job/wait/" + self.json['uuid']).json()
+			status=self.job_status_json['status']
+		return 0
+
 
 	def save_all(self,directory):
 		for k in self.endpoint.outputs.keys():

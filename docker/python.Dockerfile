@@ -85,6 +85,8 @@ USER grunt
 WORKDIR /grunt
 COPY docker/unsuper.gruntfile.yml /grunt/gruntfile.yml
 COPY docker/_kmeansseg.py _kmeansseg.py
+COPY docker/_classifierevaluation.py _classifierevaluation.py
+COPY docker/_featureSelection.py _featureSelection.py
 # What do we run on startup?
 CMD ["/grunt/grunt", "gruntfile.yml"]
 # We expose port 9901 by default

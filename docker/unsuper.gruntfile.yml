@@ -2,4 +2,8 @@ services:
   - endPoint: kmeansseg
     commandLine: ["./_kmeansseg.py", "-n", "@clusternumber","-a","<imageA","-b", "<imageB","-o", ">output"]
 
+  - endPoint: featsel
+    commandLine: ["./_featuerSelection.py", "-i","<datset","-o", ">output"]
 
+  - endPoint: classeval
+    commandLine: ["./_classifierevaluation.py", "-i","<datset","-o", ">output"]

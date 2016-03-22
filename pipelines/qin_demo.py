@@ -38,36 +38,36 @@ job.wait()
 job.save_output("registered", "/Users/m112447/Downloads/")
 
 
-# # Syntax 2
+# Syntax 2
 
-# j = g.n4(fixed="/Users/m112447/Documents/TestData/T1c.nii.gz",registered="T1cN4.nii.gz")
-# print dir(j)
-# j.wait()
-# j.save_output("registered", "/Users/m112447/Downloads/")
-# # # # Register T1 and T2
-# # But the code 
-# # Create an affine registration proxy for the grunt service
-# affine = g.affine
-# # Set parameters
-# affine.moving="/Users/m112447/Downloads/T2N4.nii.gz"
-# affine.fixed="/Users/m112447/Downloads/T1cN4.nii.gz"
-# affine.registered="T2reg.nii.gz"
-# # Don't need this
-# # affine = g.affine()
-# # Call the method
-# job = affine()
-# job.wait()
-# # Write some output
-# job.save_output("registered", "/Users/m112447/Downloads/")
-# # # Kmeans
-# g = grunt("http://ril-gpu10:9916")
-# print dir(g.services.get('kmeansseg'))
-# Info=g.services.get('kmeansseg')
-# print Info.inputs()
-# print Info.outputs()
-# print Info.parameters()
-# j = g.kmeansseg(imageA="/Users/m112447/Downloads/T1cN4.nii.gz",imageB='/Users/m112447/Downloads/T1cN4.nii.gz',clusternumber=6,output="Cluster.nii.gz")
-# print dir(j)
-# j.wait()
-# j.save_output("output", "/Users/m112447/Downloads/")
+j = g.n4(fixed="/Users/m112447/Documents/TestData/T1c.nii.gz",registered="T1cN4.nii.gz")
+print dir(j)
+j.wait()
+j.save_output("registered", "/Users/m112447/Downloads/")
+# # # Register T1 and T2
+# But the code 
+# Create an affine registration proxy for the grunt service
+affine = g.affine
+# Set parameters
+affine.moving="/Users/m112447/Downloads/T2N4.nii.gz"
+affine.fixed="/Users/m112447/Downloads/T1cN4.nii.gz"
+affine.registered="T2reg.nii.gz"
+# Don't need this
+# affine = g.affine()
+# Call the method
+job = affine()
+job.wait()
+# Write some output
+job.save_output("registered", "/Users/m112447/Downloads/")
+# # Kmeans
+g = grunt("http://ril-gpu10:9916")
+print dir(g.services.get('kmeansseg'))
+Info=g.services.get('kmeansseg')
+print Info.inputs()
+print Info.outputs()
+print Info.parameters()
+j = g.kmeansseg(imageA="/Users/m112447/Downloads/T1cN4.nii.gz",imageB='/Users/m112447/Downloads/T1cN4.nii.gz',clusternumber=6,output="Cluster.nii.gz")
+print dir(j)
+j.wait()
+j.save_output("output", "/Users/m112447/Downloads/")
 
