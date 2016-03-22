@@ -31,13 +31,17 @@ help:
 all: grunt
 
 grunt: bin/grunt
-bin/grunt: fmt assets
-	go get -v grunt/...
+bin/grunt: fmt assets $(shell find src/grunt -type f) deps
+	go build grunt/...
 
-fmt:
+fmt: $(shell find src/grunt -type f)
 	go fmt grunt/...
 
-assets: $(shell find assets -type f) bin/go-bindata
+deps:
+	go get grunt/...
+
+assets: src/grunt/assets.go
+src/grunt/assets.go: $(shell find assets -type f) bin/go-bindata
 	bin/go-bindata ${debug} -prefix assets -o src/grunt/assets.go assets/...
 
 bin/go-bindata:
@@ -58,7 +62,10 @@ clean:
 	go clean grunt/...
 	rm -rf pkg/*
 
-demo:
+bin/grunt-docker: fmt assets deps
+	GOOS=linux GOARCH=amd64 go build -o bin/grunt-docker grunt/...
+
+demo: bin/grunt-docker
 	docker build -t pesscara/grunt -f docker/grunt.Dockerfile .
 
 ants:
@@ -66,5 +73,5 @@ ants:
 
 machinelearn:
 	docker build -t pesscara/machinelearn -f docker/python.Dockerfile .
-	
+
 .PHONY: ants grunt 
