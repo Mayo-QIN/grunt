@@ -1,3 +1,5 @@
+directory: /grunt/grunt-tmp/
+
 services:
   - endPoint: kmeansseg
     commandLine: ["./_kmeansseg.py", "-n", "@clusternumber","-a","<imageA","-b", "<imageB","-o", ">output"]
