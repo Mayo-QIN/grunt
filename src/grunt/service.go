@@ -59,7 +59,6 @@ func (service *Service) setup() *Service {
 	service.InputFiles = make([]string, 0)
 	service.OutputFiles = make([]string, 0)
 	for _, arg := range service.CommandLine {
-		log.Printf("Parsing %v", arg)
 		// Do we start with an @?
 		key := arg[1:]
 		prefix := arg[0]
@@ -160,7 +159,6 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		return
 	}
 	for _, arg := range service.CommandLine {
-		log.Printf("Parsing %v", arg)
 		// Do we start with an @?
 		key := arg[1:]
 		prefix := arg[0]

@@ -89,6 +89,6 @@ func main() {
 
 	http.Handle("/", r)
 	log.Printf("Starting grunt on http://localhost:%v", port)
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 
 }
