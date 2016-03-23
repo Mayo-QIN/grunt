@@ -16,6 +16,10 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.cross_validation import cross_val_score, ShuffleSplit
 from sklearn.linear_model import Lasso
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Ridge
+from sklearn.metrics import r2_score
+from sklearn.feature_selection import RFE
+from sklearn.linear_model import LinearRegression
 np.random.seed(42)
 
 
@@ -51,7 +55,9 @@ def featureselection(datset,output='results'):
 	ws1.cell(column=3, row=1).value='Univariate using random forest regressor (r2 measure)'
 	ws1.cell(column=4, row=1).value='Univariate using random forest regressor (auc measure)'
 	ws1.cell(column=5, row=1).value='L1 regularization / Lasso'
-
+	ws1.cell(column=6, row=1).value='L3 regularization / Ridge'
+	ws1.cell(column=7, row=1).value="Mean decrease impurity"
+	ws1.cell(column=8, row=1).value='Recursive feature elimination'
 	Collumnheadeers=list(dataset.columns.values)
 	for imagebiom in Collumnheadeers:
 		print imagebiom
@@ -92,20 +98,21 @@ def featureselection(datset,output='results'):
 	scoresval= []
 	X1=X.as_matrix()
 	for i in range(X.shape[1]):
-	     score = cross_val_score(rf, X1[:, i:i+1], y, scoring="r2",
-	                              cv=ShuffleSplit(len(X), 3, .3))
-	     scores.append((round(np.mean(score), 3), Collumnheadeers[i]))
-	     scoresval.append(round(np.mean(score), 3))
+		 score = cross_val_score(rf, X1[:, i:i+1], y, scoring="r2",
+								  cv=ShuffleSplit(len(X), 3, .3))
+		 scores.append((round(np.mean(score), 3), Collumnheadeers[i]))
+		 scoresval.append(round(np.mean(score), 3))
 	print sorted(scores, reverse=True)
 	rownum=2
 	for score_val in scoresval:
 		ws1.cell(column=3, row=rownum).value=score_val
 		rownum+=1
+	scoresval= []	
 	for i in range(X.shape[1]):
-	     score = cross_val_score(rf, X1[:, i:i+1], y, scoring="roc_auc",
-	                              cv=ShuffleSplit(len(X), 3, .3))
-	     scores.append((round(np.mean(score), 3), Collumnheadeers[i]))
-	     scoresval.append(round(np.mean(score), 3))
+		 score = cross_val_score(rf, X1[:, i:i+1], y, scoring="roc_auc",
+								  cv=ShuffleSplit(len(X), 3, .3))
+		 scores.append((round(np.mean(score), 3), Collumnheadeers[i]))
+		 scoresval.append(round(np.mean(score), 3))
 	print sorted(scores, reverse=True)
 	rownum=2
 	for score_val in scoresval:
@@ -113,28 +120,56 @@ def featureselection(datset,output='results'):
 		rownum+=1
 	scaler = StandardScaler()
 	X3 = scaler.fit_transform(X1)
-	lasso = Lasso(alpha=.3)
+	lasso = Lasso(alpha=.0003)
 	lasso.fit(X3, y)
 	print "Features sorted by their score:"
-	print sorted(zip(map(lambda x: round(x, 4), lasso.scores_), 
+	print sorted(zip(map(lambda x: round(x, 4), lasso.coef_), 
 					 Collumnheadeers), reverse=True)
 	rownum=2
-	for score_val in lasso.scores_.tolist():
-		ws1.cell(column=2, row=rownum).value=score_val
+	for score_val in lasso.coef_.tolist():
+		ws1.cell(column=5, row=rownum).value=score_val
+		rownum+=1
+
+	scaler = StandardScaler()
+	X3 = scaler.fit_transform(X1)
+	ridge = Ridge(alpha=10)
+	ridge.fit(X3,y)
+	print "Features sorted by their score:"
+	print sorted(zip(map(lambda x: round(x, 4), lasso.coef_), 
+					 Collumnheadeers), reverse=True)
+	rownum=2
+	for score_val in lasso.coef_.tolist():
+		ws1.cell(column=6, row=rownum).value=score_val
+		rownum+=1
+
+	rf = RandomForestRegressor()
+	rf.fit(X, y)
+	rownum=2
+	for score_val in rf.feature_importances_.tolist():
+		ws1.cell(column=7, row=rownum).value=score_val
+		rownum+=1
+	#use linear regression as the model
+	lr = LinearRegression()
+	#rank all features, i.e continue the elimination until the last one
+	rfe = RFE(lr, n_features_to_select=1)
+	rfe.fit(X,y)
+	rownum=2
+	for score_val in rfe.ranking_.tolist():
+		ws1.cell(column=8, row=rownum).value=score_val
 		rownum+=1
 	wb.save(filename = 'ResultTableIndividualFeature.xlsx')
 	path_=os.getcwd()
 	directory=path_+'/output/'
 	if not os.path.exists(directory):
-	    os.makedirs(directory)
+		os.makedirs(directory)
 
 	types = ('*.pdf', '*.csv','*.xlsx') # the tuple of file types
 	files_grabbed = []
 	for files in types:
-	    files_grabbed.extend(glob.glob(files))
+		files_grabbed.extend(glob.glob(files))
 	for file in files_grabbed:
-	    if os.path.isfile(file):
-	        shutil.copy2(file, directory)	
+		if os.path.isfile(file):
+			shutil.copy2(file, directory)	
 	shutil.make_archive(output, 'zip', directory)
 	return 0
 
