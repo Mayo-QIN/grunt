@@ -7,9 +7,9 @@ from _grunt import *
 
 g = grunt("http://ril-gpu10:9916")
 # Syntax 1
-j=g.featsel
+j=g.classeval
 j.datset="/Users/m112447/Documents/TestData/diab.csv"
-j.output="featsel.zip"
+j.output="classeval.zip"
 job =j()
 job.wait()
 # Write some output

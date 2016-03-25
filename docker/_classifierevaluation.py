@@ -172,10 +172,10 @@ def corplot(X,filesavename='all.pdf'):
 	# Generate a custom diverging colormap
 	fig.tight_layout()
 	plt.savefig(filesavename, dpi = 300)
-def machinelearningpipeline(datset,output='results'):
+def machinelearningpipeline(datset,output='results.zip'):
 	t0 = time()
 	dataset = pd.read_csv(datset)
-	dataset.to_csv(output+'.csv')
+	dataset.to_csv(output[:-4]+'.csv')
 	# DO feature evaluation and write a xlsx file. 
 	wb = Workbook()
 	ws1 = wb.active
@@ -336,7 +336,7 @@ def machinelearningpipeline(datset,output='results'):
 	for file in files_grabbed:
 	    if os.path.isfile(file):
 	        shutil.copy2(file, directory)	
-	shutil.make_archive(output, 'zip', directory)
+	shutil.make_archive(output[:-4], 'zip', directory)
 	return 0
 
 
