@@ -26,7 +26,7 @@ class job(object):
 
 	def wait(self):
 		status=[]
-		while status!='success':
+		while status!='success' and status!='error':
 			self.job_status_json= requests.get(self.endpoint.address + "/rest/job/wait/" + self.json['uuid']).json()
 			status=self.job_status_json['status']
 		return 0
