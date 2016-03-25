@@ -9,9 +9,9 @@ g = grunt("http://ril-gpu10:9916")
 # Syntax 1
 j=g.featsel
 j.datset="/Users/m112447/Documents/TestData/diab.csv"
-j.output="featsel"
+j.output="featsel.zip"
 job =j()
 job.wait()
 # Write some output
-job.save_output("output", "/Users/m112447/Downloads/")
+job.save_output("featsel", "/Users/m112447/Downloads/")
 
