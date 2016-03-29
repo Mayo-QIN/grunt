@@ -31,7 +31,6 @@ WORKDIR /grunt
 COPY docker/ants.gruntfile.yml /grunt/gruntfile.yml
 COPY docker/simpleReg simpleReg
 COPY docker/n4bias.sh n4bias.sh
-
 # What do we run on startup?
 CMD ["/grunt/grunt", "gruntfile.yml"]
 # We expose port 9901 by default
