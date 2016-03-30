@@ -155,6 +155,7 @@ You need **curl** or python and **request**
 
 
 **curl**
+   
     curl -v -X POST --form clusternumber=6 --form imageA=@T1c.nii.gz --form imageB=@1.nii.gz --form output=cluster.nii.gz ril-gpu10:9913/rest/service/kmeansseg
 
 Send two registered images and get a 6 cluster image back
@@ -166,11 +167,9 @@ use the _grunt.py to interact with your webapp. (only requirement is requests li
 
 Example:
 
-"""
-feature selection demo
-
-"""
-
+    """
+    feature selection demo
+    """
     from _grunt import *
     # contact the sevice provider
     g = grunt("http://ril-gpu10:9916")
