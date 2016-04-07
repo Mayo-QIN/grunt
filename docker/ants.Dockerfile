@@ -15,6 +15,7 @@ RUN make -j4
 RUN ./bin/cmake -DCMAKE_BUILD_TYPE:STRING=Release .
 RUN make
 RUN make install
+
 # Install ANTS
 WORKDIR /tmp/
 RUN git clone https://github.com/stnava/ANTs.git
@@ -24,13 +25,13 @@ RUN cmake ./ANTs -DCMAKE_BUILD_TYPE=Release  -DBUILD_EXAMPLES=OFF -DBUILD_TESTIN
 RUN make -j8
 RUN echo export PATH=/tmp/bin:\$PATH >> ~/.bashrc
 RUN echo export ANTSPATH=${ANTSPATH:="/tmp/bin"} >> ~/.bashrc
+
 # copy .yml file as well te script to run. Need to modify so it works.
-USER grunt
-WORKDIR /.grunt-tmp
-WORKDIR /grunt
-COPY docker/ants.gruntfile.yml /grunt/gruntfile.yml
-COPY docker/simpleReg simpleReg
-COPY docker/n4bias.sh n4bias.sh
+WORKDIR /
+COPY docker/ants.gruntfile.yml /grunt.d/ants.yml
+COPY docker/simpleReg /simpleReg
+COPY docker/n4bias.sh /n4bias.sh
+
 # What do we run on startup?
 CMD ["/grunt/grunt", "gruntfile.yml"]
 # We expose port 9901 by default

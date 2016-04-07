@@ -1,18 +1,8 @@
-# Working directory
-# This is the directory path used for working files. If left blank,
-# use a system temp directory
-directory: /grunt/grunt-tmp/
-
 
 services:
-  - endPoint: echo
-    commandLine: ["echo", "@message"]
-    description: print a message
-    defaults:
-      message: "Hi From Grunt"
   - endPoint: affine
-    commandLine: ["./simpleReg", "-f","<fixed","-m", "<moving","-o", ">registered"]
+    commandLine: ["/simpleReg", "-f","<fixed","-m", "<moving","-o", ">registered"]
   - endPoint: n4
-    commandLine: ["./n4bias.sh", "-f","<fixed","-o", ">registered"]
+    commandLine: ["/n4bias.sh", "-f","<fixed","-o", ">registered"]
     # commandLine: ["./simpleReg", "-d", "@dimension","-f","<fixed","-m", "<moving","-e", ">registered","-w",">warped", "-i",">inverse"]
 

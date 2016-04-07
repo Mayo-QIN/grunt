@@ -34,8 +34,9 @@ server: localhost:9901
 
 # Working directory
 # This is the directory path used for working files. If left blank,
-# use a system temp directory
-directory: /grunt/grunt-tmp
+# use a system temp directory.
+# NB: To run in the pesscara/grunt docker, this must be set to /data
+directory: /data
 
 # Mail configuration
 mail:

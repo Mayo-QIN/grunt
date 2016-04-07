@@ -67,7 +67,7 @@ clean:
 bin/grunt-docker: fmt assets deps
 	GOOS=linux GOARCH=amd64 go build -o bin/grunt-docker grunt/...
 
-demo: 
+demo: bin/grunt-docker
 	docker build -t pesscara/grunt -f docker/grunt.Dockerfile .
 
 ants:
