@@ -21,11 +21,12 @@ type SMTP struct {
 }
 
 type Config struct {
-	Services   []*Service          `json:"services"`
-	ServiceMap map[string]*Service `json:omit`
-	Mail       SMTP
-	Server     string
-	Directory  string
+	Services        []*Service          `json:"services"`
+	ServiceMap      map[string]*Service `json:omit`
+	Mail            SMTP
+	Server          string
+	Directory       string
+	ConfigDirectory string `yaml:"configDirectory"`
 }
 
 var config Config
@@ -49,9 +50,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error in YML parsing: %v", err)
 	}
+
+	// Read all the files in the config directory
+	if config.ConfigDirectory != "" {
+		log.Printf("load configurations from %v", config.ConfigDirectory)
+		loadServices(config.ConfigDirectory)
+	}
+
+	// Start up all the services
 	for _, service := range config.Services {
 		service.setup()
 		config.ServiceMap[service.EndPoint] = service
+		log.Printf("\tservice available: %v\n", service.EndPoint)
 	}
 	if config.Mail.Port == 0 {
 		config.Mail.Port = 25
@@ -62,12 +72,12 @@ func main() {
 	if config.Directory == "" {
 		config.Directory, err = ioutil.TempDir("", "grunt")
 		if err != nil {
-			log.Fatalf("Failed to make working directory: %v", err.Error())
+			log.Fatalf("Failed to make working directory(%v): %v", config.Directory, err.Error())
 		}
 	}
 	err = os.MkdirAll(config.Directory, 0755)
 	if err != nil {
-		log.Fatalf("Failed to make working directory: %v", err.Error())
+		log.Fatalf("Failed to make working directory(%v): %v", config.Directory, err.Error())
 	}
 
 	// Expose the endpoints
