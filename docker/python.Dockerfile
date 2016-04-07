@@ -83,7 +83,7 @@ RUN pip install theano
 RUN pip install keras
 
 WORKDIR /
-COPY unsuper.gruntfile.yml /grunt.d/unsuper.yml
+COPY docker/unsuper.gruntfile.yml /grunt.d/unsuper.yml
 COPY docker/_kmeansseg.py _kmeansseg.py
 COPY docker/_classifierevaluation.py _classifierevaluation.py
 COPY docker/_featureSelection.py _featureSelection.py
