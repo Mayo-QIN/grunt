@@ -121,9 +121,7 @@ A service consists of the following fields:
       description   -- description of the endpoint
       defaults      -- a hashmap of default values for "@value" parameters
 
-So you just have to add an end point to the yml file and describe its use parameters. 
-
-default parameters can also be set. 
+So you just have to add an end point to the yml file and describe its use parameters. Default parameters can also be set. 
 
 ### 3c. Start everything 
 
