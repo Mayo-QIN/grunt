@@ -66,7 +66,7 @@ RUN pip install cython --upgrade
 RUN pip install scipy
 RUN pip install scikit-learn
 RUN pip install scikit-image
-RUN pip install --trusted-host www.simpleitk.org -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK 
+# RUN pip install --trusted-host www.simpleitk.org -f http://www.simpleitk.org/SimpleITK/resources/software.html SimpleITK 
 RUN pip install pandas
 RUN pip install argparse
 RUN pip install pydicom

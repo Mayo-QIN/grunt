@@ -3,14 +3,17 @@
 ## 1. Dependencies
 
 In order to run the examples (pipeline folder) you need three things.
-    - The **grunt** repository 
-    - Go (programming language installed)
-    - **python** with request library installed or just **curl**
+
+  - The **grunt** repository 
+
+  - [Go](https://golang.org)
+
+  - **python** with request library installed or just **curl** (these are two options, feel free to use any tool that interacts with REST api)
 
 ## 2. Package your algorithm
 
 To deploy your algorithm as a web app through the python interface you have to:
-- Create a **docker file** containing the dependencies of you software
+- Create a **docker file** containing your software dependencies.
 - Create a **yml** file describing the functionality of your service, as well inputs and outputs.
 
 ### 2a. Creating a docker file
@@ -29,7 +32,7 @@ Here is an example docker file (more example docker files can be found in the do
     RUN mkdir /tmp/cmake-build
     WORKDIR /tmp/cmake-build
     RUN ../cmake/bootstrap
-    RUN make -j4
+    RUN make 
     RUN ./bin/cmake -DCMAKE_BUILD_TYPE:STRING=Release .
     RUN make
     RUN make install
@@ -39,7 +42,7 @@ Here is an example docker file (more example docker files can be found in the do
     RUN mkdir -p /tmp/build
     RUN cd ./build/
     RUN cmake ./ANTs -DCMAKE_BUILD_TYPE=Release  -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF
-    RUN make -j8
+    RUN make 
     RUN echo export PATH=/tmp/bin:\$PATH >> ~/.bashrc
     RUN echo export ANTSPATH=${ANTSPATH:="/tmp/bin"} >> ~/.bashrc
     # copy .yml file as well te script to run. Need to modify so it works.
@@ -65,11 +68,19 @@ Install the basic libraries.
 
 
 `Note` This example is oriented toward a *centos 7* installation environment. 
-Please visit the docker site on more information on how to build a docker file. 
+Please visit the docker site for more information on how to build a docker file. 
 
 After installing all the necessary libraries  switch user and copy all the necessary code (code that you developed/your app) to the **grunt** directory.
 
-In the following code i copy the following three files: ants.gruntfile.yml, simpleReg,n4bias.sh. Two of them are command line executables and one of the them (ants.gruntfile.yml) is the configuration file (please see section 2b).
+In the following code i copy the following three files: 
+
+-ants.gruntfile.yml, 
+
+-simpleReg,
+
+-n4bias.sh. 
+
+Two of them are command line executables and one of the them (ants.gruntfile.yml) is the configuration file (please see section 2b).
 
     COPY docker/ants.gruntfile.yml /grunt.d/gruntfile.yml
     COPY docker/simpleReg /simpleReg
@@ -123,7 +134,7 @@ default parameters can also be set.
 
 ### 3c. Start everything 
 
-Created everything now what?
+Created everything, now what?
 
 Build the system and deploy! 
 
@@ -133,7 +144,8 @@ Build the system and deploy!
     make demo
     make ants
     make machinelearn
-    you might need to use sudo (depends on the user permissions)
+
+`NOTE` you might need to use sudo (depends on the user permissions)
 
 **Deploy**
 
@@ -142,8 +154,6 @@ To run the docker webapps use
     sudo docker run -d -p 9917:9901 pesscara/machinelearn
     sudo docker run -d -p 9916:9901 pesscara/ants
 
-
-Need **go** and **docker**
 
 ## 3. Interact with your algorithm
 
