@@ -54,7 +54,7 @@ Here is an example docker file (more example docker files can be found in the do
     # We expose port 9901 by default
     EXPOSE 9901:9901
 
-Script analysis: 
+####Script Explanation: 
 
     FROM pesscara/grunt
 
