@@ -71,13 +71,7 @@ Please visit the docker site for more information on how to build a docker file.
 
 After installing all the necessary libraries  switch user and copy all the necessary code (code that you developed/your app) to the **grunt** directory.
 
-In the following code demonstrates how three files are copied
-
--ants.gruntfile.yml, 
-
--simpleReg,
-
--n4bias.sh. 
+The following code demonstrates how three files are copied (ants.gruntfile.yml, simpleReg, n4bias.sh). 
 
 Two of them are command line executables and one of the them (ants.gruntfile.yml) is the configuration file (please see section 2b).
 
@@ -114,7 +108,7 @@ Finally expose the port (here it always should be 9901)
         # commandLine: ["/simpleReg", "-d", "@dimension","-f","<fixed","-m", "<moving","-e", ">registered","-w",">warped", "-i",">inverse"]
 
 
-Explanation of the yml file 
+#### Explanation of the yml file 
 
 A service consists of the following fields:
 
