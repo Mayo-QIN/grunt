@@ -78,10 +78,20 @@ machinelearn:
 
 cluster: 
 	# docker run --rm -p 8400:8400 -p 8500:8500 -p 8600:53/udp -h node1 --name consul progrium/consul -server -bootstrap -ui-dir /ui
-	docker run --rm -p 9901:9901 -it --link consul:consul -e ADVERTISED_PORT=9901 -e ADVERTISED_HOST=192.168.99.100 pesscara/grunt 
+	docker run --rm -p 9901:9901 -it --link consul:consul -e ADVERTISED_PORT=9901 -e ADVERTISED_HOST=192.168.99.100 pesscara/ants 
 
 cluster2: 
 	# docker run --rm -p 8400:8400 -p 8500:8500 -p 8600:53/udp -h node1 --name consul progrium/consul -server -bootstrap -ui-dir /ui
-	docker run --rm -p 9902:9901 -it --link consul:consul -e ADVERTISED_PORT=9902 -e ADVERTISED_HOST=192.168.99.100 pesscara/grunt 
+	docker run --rm -p 9902:9901 -it --link consul:consul -e ADVERTISED_PORT=9902 -e ADVERTISED_HOST=192.168.99.100 pesscara/machinelearn 
+
+Consul:
+	docker run --rm  -p 8400:8400 -p 8500:8500 -p 8600:53/udp -h node1 --name consul progrium/consul -server -bootstrap -ui-dir /ui
+
+rundockers:
+	docker run  -p 9918:9901 -d --link consul:consul -e ADVERTISED_PORT=9918 -e ADVERTISED_HOST=192.168.99.100 pesscara/ants
+	docker run  -p 9919:9901 -d --link consul:consul -e ADVERTISED_PORT=9919 -e ADVERTISED_HOST=192.168.99.100 pesscara/machinelearn
+	docker run  -p 9928:9901 -d --link consul:consul -e ADVERTISED_PORT=9928 -e ADVERTISED_HOST=192.168.99.100 pesscara/ants
+	docker run  -p 9929:9901 -d --link consul:consul -e ADVERTISED_PORT=9929 -e ADVERTISED_HOST=192.168.99.100 pesscara/machinelearn
+	# docker run  -p 9940:9901 -d --link consul:consul -e ADVERTISED_PORT=9940 -e ADVERTISED_HOST=192.168.99.100 pesscara/machinelearn
 
 .PHONY: ants grunt 

@@ -33,6 +33,6 @@ COPY docker/simpleReg /simpleReg
 COPY docker/n4bias.sh /n4bias.sh
 
 # What do we run on startup?
-CMD ["/grunt/grunt", "gruntfile.yml"]
+CMD ["/bin/grunt", "/grunt.d/ants.yml"]
 # We expose port 9901 by default
 EXPOSE 9901:9901

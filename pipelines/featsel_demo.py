@@ -5,7 +5,7 @@ feature selection demo
 
 from _grunt import *
 
-g = grunt("http://ril-gpu10:9916")
+g = grunt("http://192.168.99.100:9919")
 # Syntax 1
 j=g.featsel
 j.datset="/Users/m112447/Documents/TestData/diab.csv"
