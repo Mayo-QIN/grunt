@@ -283,3 +283,15 @@ func GetJobFile(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Disposition", "attachment;filename="+filepath.Base(file))
 	http.ServeFile(w, request, file)
 }
+
+func GetHealth(w http.ResponseWriter, request *http.Request) {
+	numberOfJobs := len(jobs)
+	if numberOfJobs <= config.WarnLevel {
+		w.WriteHeader(200)
+	} else if numberOfJobs <= config.CriticalLevel {
+		w.WriteHeader(429)
+	} else {
+		w.WriteHeader(500)
+	}
+	json.NewEncoder(w).Encode(jobs)
+}

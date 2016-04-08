@@ -76,4 +76,12 @@ ants:
 machinelearn:
 	docker build -t pesscara/machinelearn -f docker/python.Dockerfile .
 
+cluster: 
+	# docker run --rm -p 8400:8400 -p 8500:8500 -p 8600:53/udp -h node1 --name consul progrium/consul -server -bootstrap -ui-dir /ui
+	docker run --rm -p 9901:9901 -it --link consul:consul -e ADVERTISED_PORT=9901 -e ADVERTISED_HOST=192.168.99.100 pesscara/grunt 
+
+cluster2: 
+	# docker run --rm -p 8400:8400 -p 8500:8500 -p 8600:53/udp -h node1 --name consul progrium/consul -server -bootstrap -ui-dir /ui
+	docker run --rm -p 9902:9901 -it --link consul:consul -e ADVERTISED_PORT=9902 -e ADVERTISED_HOST=192.168.99.100 pesscara/grunt 
+
 .PHONY: ants grunt 

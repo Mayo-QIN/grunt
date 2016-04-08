@@ -27,15 +27,29 @@ type Config struct {
 	Server          string
 	Directory       string
 	ConfigDirectory string `yaml:"configDirectory"`
+	WarnLevel       int    `yaml:"warnLevel"`
+	CriticalLevel   int    `yaml:"criticalLevel"`
 }
 
 var config Config
+var consulHost string
+var consulPort int
+var advertisedHost string
+var advertisedPort int
 
 func main() {
 	var port int
 	flag.IntVar(&port, "p", 9901, "specify port to use.  defaults to 9901.")
+	flag.StringVar(&consulHost, "consul", "", "specify Consul host. defaults to none. Also set by CONSUL_HOST or CONSULT_PORT_8500_TCP_ADDR environment variable")
+	flag.IntVar(&consulPort, "consul-port", 0, "specify Consul port to use.  defaults to 0.  Also set through the CONSULT_HOST or CONSUL_PORT_8500_TCP_PORT environment variable set by Docker")
+	flag.StringVar(&advertisedHost, "advertised", "", "specify Advertised host. defaults to none.  Also set through the ADVERTISED_HOST environment variable.")
+	flag.IntVar(&advertisedPort, "advertised-port", 0, "specify Advertised port to use.  defaults to 0. Also set through the ADVERTISED_PORT environment variable.")
 
+	// Set config defaults
 	config.ServiceMap = make(map[string]*Service)
+	config.WarnLevel = 3
+	config.CriticalLevel = 5
+
 	flag.Parse()
 
 	if len(flag.Args()) < 1 {
@@ -94,11 +108,13 @@ func main() {
 	r.HandleFunc("/job/{id}", JobDetail).Methods("GET")
 	r.HandleFunc("/services.html", Services).Methods("GET")
 	r.HandleFunc("/submit/{id}.html", Submit).Methods("GET")
+	r.HandleFunc("/health", GetHealth).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo}))
 
 	http.Handle("/", r)
 	log.Printf("Starting grunt on http://localhost:%v", port)
+	registerWithConsul()
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 
 }
