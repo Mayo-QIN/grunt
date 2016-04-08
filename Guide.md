@@ -291,7 +291,7 @@ curl -v  docker:8500/v1/health/service/grunt | jq
 
 The status for the grunt services @ `192.168.99.100:9901` is `passing` with `0 jobs`.
 
-Launch a few sleep jobs to get us to the warning threshold:
+To test it out you can launch a few sleep jobs to trigger the warning threshold (defined in the yml configuration file):
 
 ```
 # Do this 6 times
