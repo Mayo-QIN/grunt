@@ -72,7 +72,7 @@ Please visit the docker site for more information on how to build a docker file.
 
 After installing all the necessary libraries  switch user and copy all the necessary code (code that you developed/your app) to the **grunt** directory.
 
-In the following code i copy the following three files: 
+In the following code the following three files are copied: 
 
 -ants.gruntfile.yml, 
 
