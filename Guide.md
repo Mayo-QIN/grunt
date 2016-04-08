@@ -18,7 +18,6 @@ To deploy your algorithm as a web app through the python interface you have to:
 Here is an example docker file (more example docker files can be found in the docker folder of the grunt repository - *.dockerfile extension*):
 
     FROM pesscara/grunt
-    USER root
     # Maybe I need to install Dev tools for dependancies
     RUN yum install -y wget
     RUN yum install -y git
@@ -44,19 +43,17 @@ Here is an example docker file (more example docker files can be found in the do
     RUN echo export PATH=/tmp/bin:\$PATH >> ~/.bashrc
     RUN echo export ANTSPATH=${ANTSPATH:="/tmp/bin"} >> ~/.bashrc
     # copy .yml file as well te script to run. Need to modify so it works.
-    USER grunt
-    COPY docker/ants.gruntfile.yml /grunt/gruntfile.yml
-    COPY docker/simpleReg simpleReg
-    COPY docker/n4bias.sh n4bias.sh
+    COPY docker/ants.gruntfile.yml /grunt.d/gruntfile.yml
+    COPY docker/simpleReg /simpleReg
+    COPY docker/n4bias.sh /n4bias.sh
     # What do we run on startup?
-    CMD ["/grunt/grunt", "gruntfile.yml"]
+    CMD ["/bin/grunt", "/gruntfile.yml"]
     # We expose port 9901 by default
     EXPOSE 9901:9901
 
 Script analysis: 
 
     FROM pesscara/grunt
-    USER root
 
 We use the pesscara/grunt template to start all our builds since this already contains grunt and proper configuration.
 
@@ -74,15 +71,14 @@ After installing all the necessary libraries  switch user and copy all the neces
 
 In the following code i copy the following three files: ants.gruntfile.yml, simpleReg,n4bias.sh. Two of them are command line executables and one of the them (ants.gruntfile.yml) is the configuration file (please see section 2b).
 
-    USER grunt
-    COPY docker/ants.gruntfile.yml /grunt/gruntfile.yml
-    COPY docker/simpleReg simpleReg
-    COPY docker/n4bias.sh n4bias.sh
+    COPY docker/ants.gruntfile.yml /grunt.d/gruntfile.yml
+    COPY docker/simpleReg /simpleReg
+    COPY docker/n4bias.sh /n4bias.sh
 
 Subsequently we run grunt utilizing the yml file we just copied. 
 
     # What do we run on startup?
-    CMD ["/grunt/grunt", "gruntfile.yml"]
+    CMD ["/bin/grunt", "/gruntfile.yml"]
     # We expose port 9901 by default
 
 Finally expose the port (here it always should be 9901)
@@ -94,7 +90,7 @@ Finally expose the port (here it always should be 9901)
     # Working directory
     # This is the directory path used for working files. If left blank,
     # use a system temp directory
-    directory: /grunt/grunt-tmp/
+    directory: /data/
     services:
       - endPoint: echo
         commandLine: ["echo", "@message"]
@@ -102,10 +98,10 @@ Finally expose the port (here it always should be 9901)
         defaults:
           message: "Hi From Grunt"
       - endPoint: affine
-        commandLine: ["./simpleReg", "-f","<fixed","-m", "<moving","-o", ">registered"]
+        commandLine: ["/simpleReg", "-f","<fixed","-m", "<moving","-o", ">registered"]
       - endPoint: n4
-        commandLine: ["./n4bias.sh", "-f","<fixed","-o", ">registered"]
-        # commandLine: ["./simpleReg", "-d", "@dimension","-f","<fixed","-m", "<moving","-e", ">registered","-w",">warped", "-i",">inverse"]
+        commandLine: ["/n4bias.sh", "-f","<fixed","-o", ">registered"]
+        # commandLine: ["/simpleReg", "-d", "@dimension","-f","<fixed","-m", "<moving","-e", ">registered","-w",">warped", "-i",">inverse"]
 
 
 Explanation of the yml file 
@@ -186,9 +182,130 @@ Example:
 
 ## 4. Monitor 
 
-Visit the address of the server hosting the docker. 
+Visit the address of the server hosting the docker.
 
+## 5. Microservice registration
 
+Grunt is configured to Connect to a [Consul](https://www.consul.io/) server, if the necessary conditions are met.  First grunt must know where the Consul server is, both host and port.  Grunt also needs to know it's "advertised" host and port, especially if running behind a load balancer or in a docker.  These are the relevant command line flags and environment variables:
 
+- Consul Host: `-consul` or `CONSUL_HOST` or `CONSUL_PORT_8500_TCP_ADDR`
+- Consul Port: `-consul-port` or `CONSUL_PORT` or `CONSUL_PORT_8500_TCP_PORT`
+- Advertised Host: `-advertised` or `ADVERTISED_HOST`
+- Advertised Port: `-advertised-port` or `ADVERTISED_PORT`
 
+At startup, if these variables are set, grunt attempts to register itself with Consul.  In addition, grunt registers health checks, notifying Consul when the number of jobs exceeds the `warnLevel` and `criticalLevel` as configured in the `gruntfile.yml`.
 
+### Example
+
+First, let's start Consul running in a docker:
+
+```
+docker run --rm  -p 8400:8400 -p 8500:8500 -p 8600:53/udp -h node1 --name consul progrium/consul -server -bootstrap -ui-dir /ui
+```
+
+The UI should be available at http://127.0.0.1:8500 or `http://$(docker-machine ip default):8500` on a Mac.  NB: it is rather helpful to put a `docker` entry in `/etc/hosts`.  For Linux, this would be `127.0.0.1 docker` and on a Mac `192.168.99.100 docker`, or `$(docker-machine ip default)`.  For our purposes, we will assume any Dockers are reachable @ `192.168.99.100` via the $DOCKER_IP variable.
+
+Start a grunt running, and have it connect to Consul:
+
+```
+docker run --rm -p 9901:9901 -it --link consul:consul -e ADVERTISED_PORT=9901 -e ADVERTISED_HOST=$DOCKER_IP pesscara/grunt
+```
+
+Start a second grunt running, connected to Consul.  NB: the second grunt instance is registered on port `9902`:
+
+```
+docker run --rm -p 9902:9901 -it --link consul:consul -e ADVERTISED_PORT=9902 -e ADVERTISED_HOST=$DOCKER_IP pesscara/grunt
+```
+
+Visiting the [Consul UI](http://192.168.99.100:8500/ui/#/dc1/services/grunt), we can see two grunt instances registered.  And they can be queried using curl.
+
+```
+curl $DOCKER_IP:8500/v1/catalog/service/grunt
+[
+  {
+    "Node": "node1",
+    "Address": "172.17.0.2",
+    "ServiceID": "grunt-1b9c0e07-86c1-4636-98cd-5bfdbb9d6188",
+    "ServiceName": "grunt",
+    "ServiceTags": [
+      "echo",
+      "sleep",
+      "copy"
+    ],
+    "ServiceAddress": "192.168.99.100",
+    "ServicePort": 9901
+  },
+  {
+    "Node": "node1",
+    "Address": "172.17.0.2",
+    "ServiceID": "grunt-6384695e-c5b9-4a98-ae50-5e51faeff7ec",
+    "ServiceName": "grunt",
+    "ServiceTags": [
+      "echo",
+      "sleep",
+      "copy"
+    ],
+    "ServiceAddress": "192.168.99.100",
+    "ServicePort": 9902
+  }
+]
+```
+
+Two grunt services are registered, one at `192.168.99.100:9901` and one at `192.168.99.100:9902`.
+
+#### Grunt service health
+
+Grunt provides health status based on the number of running jobs.  The thresholds are set by `warnLevel` and `criticalLevel` in `gruntfile.yml`.  Consul maintains the health of each grunt service.
+
+```
+curl -v  docker:8500/v1/health/service/grunt | jq
+[
+  {
+    "Node": ...
+    "Service": {
+      "ID": "grunt-1b9c0e07-86c1-4636-98cd-5bfdbb9d6188",
+      "Service": "grunt",
+      "Tags": ...
+      "Address": "192.168.99.100",
+      "Port": 9901
+    },
+    "Checks": [
+      {
+        "Node": "node1",
+        "CheckID": "grunt-1b9c0e07-86c1-4636-98cd-5bfdbb9d6188",
+        "Name": "grunt-1b9c0e07-86c1-4636-98cd-5bfdbb9d6188",
+        "Status": "passing",
+        "Notes": "",
+        "Output": "0 jobs",
+        "ServiceID": "grunt-1b9c0e07-86c1-4636-98cd-5bfdbb9d6188",
+        "ServiceName": "grunt"
+      },
+      ...
+```
+
+The status for the grunt services @ `192.168.99.100:9901` is `passing` with `0 jobs`.
+
+Launch a few sleep jobs to get us to the warning threshold:
+
+```
+# Do this 6 times
+curl -X POST --form seconds=5000 192.168.99.100:9901/rest/service/sleep
+```
+
+Grunt updates Consul every 30 seconds, changes may take some time to be registered.
+
+```
+curl -v  docker:8500/v1/health/service/grunt | jq
+...
+   "Checks": [
+      {
+        "Node": "node1",
+        "CheckID": "grunt-1b9c0e07-86c1-4636-98cd-5bfdbb9d6188",
+        "Name": "grunt-1b9c0e07-86c1-4636-98cd-5bfdbb9d6188",
+        "Status": "critical",
+        "Notes": "",
+        "Output": "6 jobs",
+        ...
+```
+
+Now Consul reports grunt to be in the critical status, with 6 running jobs.

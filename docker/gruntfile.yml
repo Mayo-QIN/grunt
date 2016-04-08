@@ -38,6 +38,11 @@ server: localhost:9901
 # NB: To run in the pesscara/grunt docker, this must be set to /data
 directory: /data
 
+# Report Warn status to Consul when we have more than warnLevel jobs
+warnLevel: 3
+# Report Critical status to Consul when we have more than criticalLevel jobs
+warnLevel: 5
+
 # Mail configuration
 mail:
   from: noreply@grunt-docker.io
