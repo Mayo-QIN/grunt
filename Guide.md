@@ -182,13 +182,13 @@ Example:
     # Get the endpoint (The endpoint must exist)
     j=g.classeval
     # specify inputs and outputs
-    j.datset="/Users/m112447/Documents/TestData/diab.csv"
+    j.datset="diab.csv"
     j.output="classeval.zip"
     # Execute and wait for the output
     job =j()
     job.wait()
     # Download the output
-    job.save_output("output", "/Users/m112447/Downloads/")
+    job.save_output("output", "/Downloads/")
 
 ## 4. Monitor 
 
