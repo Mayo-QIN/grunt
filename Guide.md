@@ -185,7 +185,10 @@ Example:
 
 ## 4. Monitor 
 
-Visit the address of the server hosting the docker.
+The grunt service publishes a webpage that can be used to monitor the running processes. It also can be used to download any output files that have been created.
+Visit the address of the server hosting the docker. For instance
+
+    http://localhost:9916
 
 ## 5. Microservice registration
 
