@@ -58,8 +58,7 @@ Here is an example docker file (more example docker files can be found in the do
 
     FROM pesscara/grunt
 
-We use the pesscara/grunt template to start all our builds since this already contains grunt and proper configuration.
-
+We use the *pesscara/grunt docker template* to start our builds since is already properly configured for **grunt**
 Install the basic libraries. 
 
     RUN yum install -y wget
