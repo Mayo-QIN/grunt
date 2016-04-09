@@ -20,13 +20,15 @@ To deploy your algorithm as a web app through the python interface you have to:
 
 Here is an example docker file (more example docker files can be found in the docker folder of the grunt repository - *.dockerfile extension*):
 
+    # Load the basic image containing the grunt executable
     FROM pesscara/grunt
-    # Maybe I need to install Dev tools for dependancies
+    # Install Dev tools and various dependencies
     RUN yum install -y wget
     RUN yum install -y git
     RUN yum install zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel -y
     RUN yum install libitpp atlas blas lapack atlas-devel blas-devel lapack-devel libpng-devel -y
     RUN yum groupinstall "Development tools" -y
+    # Change to tmp directory and build cmake and ants
     WORKDIR /tmp/
     RUN git clone -b release http://cmake.org/cmake.git
     RUN mkdir /tmp/cmake-build
@@ -38,15 +40,18 @@ Here is an example docker file (more example docker files can be found in the do
     RUN make install
     # Install ANTS
     WORKDIR /tmp/
+    # Clone ANTs and build
     RUN git clone https://github.com/stnava/ANTs.git
     RUN mkdir -p /tmp/build
     RUN cd ./build/
     RUN cmake ./ANTs -DCMAKE_BUILD_TYPE=Release  -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF
     RUN make 
+    # Export paths to .bashrc
     RUN echo export PATH=/tmp/bin:\$PATH >> ~/.bashrc
     RUN echo export ANTSPATH=${ANTSPATH:="/tmp/bin"} >> ~/.bashrc
     # copy .yml file as well te script to run. Need to modify so it works.
     COPY docker/ants.gruntfile.yml /grunt.d/gruntfile.yml
+    # Copy the software executable
     COPY docker/simpleReg /simpleReg
     COPY docker/n4bias.sh /n4bias.sh
     # What do we run on startup?
@@ -91,22 +96,64 @@ Finally expose the port (here it always should be 9901)
 
 ### 2b. Creating a yml file
 
+    # 
+    # A service consists of the following fields:
+    # endPoint      -- REST endpoint, e.g. /rest/service/<endPoint>
+    # commandLine   -- Command line to run
+    #                  Some special command line parameters are
+    #                  @value  -- replace this argument with the parameter from the POST
+    #                  <in     -- look for an uploaded file
+    #                  >out    -- the process will generate this file for later download
+    # description   -- description of the endpoint
+    # defaults      -- a hashmap of default values for "@value" parameters
+    # this example configuration file exposes 2 endpoints, echo and copy
+    # echo simply echos the input and can be called like this:
+    # curl -X POST  -v --form Message=hi localhost:9901/rest/service/echo
+    # copy takes input and output files.  <in must be provided
+    # curl -X POST  -v --form in=@README.md --form output=R.md localhost:9901/rest/service/copy
+    # NB: "--form input=@README.md" indicates that curl should send README.md as the form parameter "input"
+    #     and the output filename is set to "R.md"
+    #
+    # to retrieve the output data, first find the UUID in the response, and request the file
+    # wget localhost:9901/rest/job/eab4ab07-c8f7-44f7-b7d8-87dbd7226ea4/file/out
+    # NB: we request the output file using the "out" parameter, not the filename we requested
+    # Here is the copy example using jq(http://stedolan.github.io/jq/) to help a bit
+    # 
+    # id=`curl --silent -X POST --form in=@README.md --form out=small_file.txt localhost:9901/rest/service/copy | jq -r .uuid`
+    # wget --content-disposition localhost:9901/rest/job/$id/file/output
+    # This is the hostname:port that the server is running on.
+    # Used for logging and email
+    server: localhost:9901
     # Working directory
     # This is the directory path used for working files. If left blank,
-    # use a system temp directory
-    directory: /data/
+    # use a system temp directory.
+    # NB: To run in the pesscara/grunt docker, this must be set to /data
+    directory: /data
+    # Report Warn status to Consul when we have more than warnLevel jobs
+    warnLevel: 3
+    # Report Critical status to Consul when we have more than criticalLevel jobs
+    warnLevel: 5
+    # Mail configuration
+    mail:
+      from: noreply@grunt-docker.io
+      server: smtprelay.mayo.edu
+      # username: grunt
+      # password: <secret>
+      
     services:
-      - endPoint: echo
-        commandLine: ["echo", "@message"]
+      * endPoint: echo
+        commandLine: ["echo", "@Message"]
         description: print a message
         defaults:
-          message: "Hi From Grunt"
-      - endPoint: affine
-        commandLine: ["/simpleReg", "-f","<fixed","-m", "<moving","-o", ">registered"]
-      - endPoint: n4
-        commandLine: ["/n4bias.sh", "-f","<fixed","-o", ">registered"]
-        # commandLine: ["/simpleReg", "-d", "@dimension","-f","<fixed","-m", "<moving","-e", ">registered","-w",">warped", "-i",">inverse"]
-
+          Message: "Hi From Grunt"
+      * endPoint: sleep
+        commandLine: ["sleep", "@seconds"]
+        description: Sleep for a while
+        defaults:
+          seconds: 300
+      * endPoint: copy
+        commandLine: ["cp", "<input", ">output"]
+        description: copy a file
 
 #### Explanation of the yml file 
 
@@ -135,15 +182,21 @@ Build the system and deploy!
     make demo
     make ants
     make machinelearn
+    make Consul
+    make rundockers
 
 `NOTE` you might need to use sudo (depends on the user permissions)
 
 **Deploy**
 
 To run the docker webapps use
-
-    sudo docker run -d -p 9917:9901 pesscara/machinelearn
-    sudo docker run -d -p 9916:9901 pesscara/ants
+  
+    - Using MakeFile
+        make Consul
+        make rundockers
+    - By command line
+      sudo docker run -d -p 9917:9901 pesscara/machinelearn
+      sudo docker run -d -p 9916:9901 pesscara/ants
 
 
 ## 3. Interact with your algorithm
@@ -160,7 +213,6 @@ Send two registered images and get a 6 cluster image back
 **python**
 
 use the _grunt.py to interact with your webapp. (only requirement is requests library)
-
 
 Example:
 
@@ -180,6 +232,10 @@ Example:
     job.wait()
     # Download the output
     job.save_output("output", "/Downloads/")
+
+**or**
+
+any other tool that can interact with REST api
 
 ## 4. Monitor 
 
