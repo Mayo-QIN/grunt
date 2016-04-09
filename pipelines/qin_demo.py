@@ -27,7 +27,7 @@ curl -v -X POST --form fixed=@T1c.nii.gz --form registered=1.nii.gz ril-gpu10:99
 """
 from _grunt import *
 
-g = grunt("http://ril-gpu10:9919")
+g = grunt("http://192.168.99.100:9918")
 # Syntax 1
 j=g.n4
 j.fixed="/Users/m112447/Documents/TestData/T2.nii.gz"
@@ -60,7 +60,7 @@ job.wait()
 # Write some output
 job.save_output("registered", "/Users/m112447/Downloads/")
 # # Kmeans
-g = grunt("http://ril-gpu10:9916")
+g = grunt("http://192.168.99.100:9919")
 print dir(g.services.get('kmeansseg'))
 Info=g.services.get('kmeansseg')
 print Info.inputs()
