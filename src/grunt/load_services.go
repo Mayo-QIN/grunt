@@ -10,6 +10,7 @@ import (
 )
 
 type ConfigD struct {
+	Name     string
 	Services []*Service
 }
 
@@ -37,7 +38,10 @@ func loadServices(configDirectory string) error {
 			return fmt.Errorf("Error in YML parsing: %v", err)
 		}
 
-		// Append
+		// Advertise in Consul
+		registerConfigWithConsul(&configD)
+
+		// Append to existing service endpoints
 		config.Services = append(config.Services, configD.Services...)
 		return nil
 	})

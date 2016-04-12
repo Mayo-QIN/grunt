@@ -12,8 +12,12 @@ import (
 	"time"
 )
 
-func registerWithConsul() {
+var serviceIDs []string
+var agent *consulclient.Agent
+
+func init() {
 	var err error
+
 	// Check environment variables
 	if advertisedHost == "" {
 		advertisedHost = os.Getenv("ADVERTISED_HOST")
@@ -66,17 +70,53 @@ func registerWithConsul() {
 	}
 
 	log.Printf("connected to consul %+v\n", consul)
-	agent := consul.Agent()
+	agent = consul.Agent()
+
+	// Register cleanup callback
+	// when the program exits with SIGTERM and Interrupt (SIGINT), cleanly leave consul
+	s := make(chan os.Signal, 1)
+	signal.Notify(s, os.Interrupt)
+	signal.Notify(s, syscall.SIGTERM)
+	go func() {
+		<-s
+		for _, id := range serviceIDs {
+			log.Printf("deregister %v", id)
+			err := agent.ServiceDeregister(id)
+			if err != nil {
+				log.Printf("Could not deregister %v\n", err.Error())
+			}
+		}
+		os.Exit(0)
+	}()
+}
+
+func registerConfigWithConsul(configD *ConfigD) {
+	var err error
+
+	// Make sure we have something to report...
+	if len(configD.Services) == 0 {
+		return
+	}
+
+	if agent == nil {
+		log.Printf("not registering %v with consul, no connection exists", configD.Name)
+		return
+	}
 
 	// Register us as a service.  Each endpoint is listed as a tag.
 	tags := make([]string, 0)
-	for _, service := range config.Services {
+	for _, service := range configD.Services {
 		tags = append(tags, service.EndPoint)
+	}
+
+	name := configD.Name
+	if name == "" {
+		name = "grunt"
 	}
 
 	service := consulclient.AgentServiceRegistration{
 		ID:      "grunt-" + uuid.NewV4().String(),
-		Name:    "grunt",
+		Name:    name,
 		Tags:    tags,
 		Port:    advertisedPort,
 		Address: advertisedHost,
@@ -87,6 +127,7 @@ func registerWithConsul() {
 	}
 
 	log.Printf("Registered: %+v", service)
+	serviceIDs = append(serviceIDs, service.ID)
 
 	// Register our check
 
@@ -103,7 +144,15 @@ func registerWithConsul() {
 	}
 
 	ttl := func() {
-		numberOfJobs := len(jobs)
+		numberOfJobs := 0
+		for _, job := range jobs {
+			for _, service := range configD.Services {
+				if job.Endpoint == service.EndPoint {
+					numberOfJobs++
+				}
+			}
+		}
+		// numberOfJobs := len(jobs)
 		if numberOfJobs <= config.WarnLevel {
 			agent.PassTTL(check.Name, fmt.Sprintf("%d jobs", numberOfJobs))
 		} else if numberOfJobs <= config.CriticalLevel {
@@ -111,7 +160,6 @@ func registerWithConsul() {
 		} else {
 			agent.FailTTL(check.Name, fmt.Sprintf("%d jobs", numberOfJobs))
 		}
-
 	}
 
 	go func() {
@@ -123,16 +171,4 @@ func registerWithConsul() {
 		}
 	}()
 
-	// when the program exits with SIGTERM and Interrupt (SIGINT), cleanly leave consul
-	s := make(chan os.Signal, 1)
-	signal.Notify(s, os.Interrupt)
-	signal.Notify(s, syscall.SIGTERM)
-	go func() {
-		<-s
-		err := agent.ServiceDeregister(service.ID)
-		if err != nil {
-			log.Printf("Could not deregister %v\n", err.Error())
-		}
-		os.Exit(0)
-	}()
 }

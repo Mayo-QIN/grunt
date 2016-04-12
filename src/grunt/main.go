@@ -65,6 +65,10 @@ func main() {
 		log.Fatalf("Error in YML parsing: %v", err)
 	}
 
+	// Register the main grunt services
+	c := ConfigD{Name: "grunt", Services: config.Services}
+	registerConfigWithConsul(&c)
+
 	// Read all the files in the config directory
 	if config.ConfigDirectory != "" {
 		log.Printf("load configurations from %v", config.ConfigDirectory)
@@ -114,7 +118,6 @@ func main() {
 
 	http.Handle("/", r)
 	log.Printf("Starting grunt on http://localhost:%v", port)
-	registerWithConsul()
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
 
 }
