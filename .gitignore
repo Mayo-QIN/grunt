@@ -5,3 +5,8 @@ src/gopkg.in
 src/golang.org
 src/grunt/assets
 src/grunt/assets.go
+gruntv
+docker/diab.csv
+docker/results.zip.zip
+docker/output/diab.csv
+grunt-tmp

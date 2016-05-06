@@ -43,24 +43,13 @@ warnLevel: 3
 # Report Critical status to Consul when we have more than criticalLevel jobs
 warnLevel: 5
 
-# Mail configuration
-mail:
-  from: noreply@grunt-docker.io
-  server: smtprelay.mayo.edu
-  # username: grunt
-  # password: <secret>
-  
+
 services:
-  - endPoint: echo
-    commandLine: ["echo", "@Message"]
-    description: print a message
-    defaults:
-      Message: "Hi From Grunt"
-  - endPoint: sleep
-    commandLine: ["sleep", "@seconds"]
-    description: Sleep for a while
-    defaults:
-      seconds: 300
-  - endPoint: copy
-    commandLine: ["cp", "<input", ">output"]
-    description: copy a file
+  - endPoint: kmeansseg
+    commandLine: ["./_kmeansseg.py", "-n", "@clusternumber","-a","<imageA","-b", "<imageB","-o", ">output"]
+
+  - endPoint: featsel
+    commandLine: ["./_featureSelection.py", "-i","<datset","-o", ">output"]
+
+  - endPoint: classeval
+    commandLine: ["./_classifierevaluation.py", "-i","<datset","-o", ">output"]

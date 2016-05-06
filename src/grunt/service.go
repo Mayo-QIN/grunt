@@ -9,7 +9,6 @@ import (
 	uuid "github.com/satori/go.uuid"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -23,21 +22,27 @@ var jobMutex sync.Mutex
 var jobs = make(map[string]*Job)
 
 type Service struct {
-	EndPoint    string            `yaml:"endPoint" json:"endPoint"`
-	CommandLine []string          `yaml:"commandLine" json:"commandLine"`
+	EndPoint    string            `yaml:"endPoint" json:"end_point"`
+	CommandLine []string          `yaml:"commandLine" json:"command_line"`
 	Description string            `json:"description"`
-	Defaults    map[string]string `yaml:defaults json:defaults`
+	Defaults    map[string]string `yaml:defaults json:"defaults"`
+	Arguments   []string          `json:"arguments"`
+	Parameters  []string          `json:"parameters"`
+	InputFiles  []string          `json:"input_files"`
+	OutputFiles []string          `json:"output_files"`
 }
 
 type Job struct {
 	sync.Mutex        `json:ignore`
 	UUID              string            `json:"uuid"`
-	CommandLine       []string          `yaml:"commandLine" json:"commandLine"`
+	CommandLine       []string          `yaml:"commandLine" json:"command_line"`
 	ParsedCommandLine []string          `json:"-"`
 	FileMap           map[string]string `json:"-"`
 	StartTime         time.Time         `json:"start_time"`
 	EndTime           time.Time         `json:"end_time"`
 	Status            string            `json:"status"`
+	Host              string            `json:"host"`
+	Port              int               `json:"port"`
 	Address           []string          `json:"address"`
 	Endpoint          string            `json:"endpoint"`
 
@@ -47,6 +52,34 @@ type Job struct {
 	// Running process
 	cmd    *exec.Cmd
 	Output bytes.Buffer `json:"output"`
+}
+
+// Parse our argements
+func (service *Service) setup() *Service {
+	service.Arguments = make([]string, 0)
+	service.Parameters = make([]string, 0)
+	service.InputFiles = make([]string, 0)
+	service.OutputFiles = make([]string, 0)
+	for _, arg := range service.CommandLine {
+		// Do we start with an @?
+		key := arg[1:]
+		prefix := arg[0]
+		isArg := false
+		if prefix == '@' {
+			isArg = true
+			service.Parameters = append(service.Arguments, key)
+		} else if prefix == '<' {
+			isArg = true
+			service.InputFiles = append(service.InputFiles, key)
+		} else if prefix == '>' {
+			isArg = true
+			service.OutputFiles = append(service.OutputFiles, key)
+		}
+		if isArg {
+			service.Arguments = append(service.Arguments, key)
+		}
+	}
+	return service
 }
 
 func Template(name string, data map[string]interface{}, w http.ResponseWriter, request *http.Request) {
@@ -111,6 +144,8 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		CommandLine: service.CommandLine,
 		FileMap:     make(map[string]string),
 		Endpoint:    service.EndPoint,
+		Host:        advertisedHost,
+		Port:        advertisedPort,
 	}
 
 	// do we have an email address?
@@ -119,10 +154,15 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 	}
 
 	cl := make([]string, 0)
-	// Make a temp directory
-	dir, err := ioutil.TempDir("", job.UUID)
+	// Make a working directory
+	dir := filepath.Join(config.Directory, service.EndPoint, job.UUID)
+	err = os.MkdirAll(dir, 0755)
+	if err != nil {
+		log.Printf("Error making working directory: %v", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	for _, arg := range service.CommandLine {
-		log.Printf("Parsing %v", arg)
 		// Do we start with an @?
 		key := arg[1:]
 		prefix := arg[0]
@@ -224,12 +264,14 @@ func GetJob(w http.ResponseWriter, request *http.Request) {
 func WaitForJob(w http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	job := jobs[vars["id"]]
-	c := make(chan bool)
-	job.Lock()
-	job.waiters = append(job.waiters, c)
-	job.Unlock()
-	<-c
-	close(c)
+	if job.Status == "running" {
+		c := make(chan bool)
+		job.Lock()
+		job.waiters = append(job.waiters, c)
+		job.Unlock()
+		<-c
+		close(c)
+	}
 	json.NewEncoder(w).Encode(job)
 }
 
@@ -244,4 +286,16 @@ func GetJobFile(w http.ResponseWriter, request *http.Request) {
 	file := job.FileMap[vars["filename"]]
 	w.Header().Set("Content-Disposition", "attachment;filename="+filepath.Base(file))
 	http.ServeFile(w, request, file)
+}
+
+func GetHealth(w http.ResponseWriter, request *http.Request) {
+	numberOfJobs := len(jobs)
+	if numberOfJobs <= config.WarnLevel {
+		w.WriteHeader(200)
+	} else if numberOfJobs <= config.CriticalLevel {
+		w.WriteHeader(429)
+	} else {
+		w.WriteHeader(500)
+	}
+	json.NewEncoder(w).Encode(jobs)
 }

@@ -8,6 +8,8 @@ Grunt development was sponsored by NCI Grant CA160045.
 
 `make grunt`
 
+`make demo # contains the basic image`
+
 ## Run
 
 `grunt -p 9901 gruntfile.yml`
@@ -20,12 +22,17 @@ Demo
 ** Need to execute as root or sudo **
 
     make demo
+
 Was my docker image created?
     docker image
 if you can see pesscara/grunt yes
 Then to lunch the docker type:
 
     docker run -d -p 9901:9901 pesscara/grunt
+
+or for ants:
+
+    docker run -i -p 9901:9903 pesscara/ants
 
 You can check that docker is runing utiliing the floowing command
 
