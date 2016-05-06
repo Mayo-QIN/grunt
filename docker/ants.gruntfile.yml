@@ -2,19 +2,19 @@
 # endPoint      -- REST endpoint, e.g. /rest/service/<endPoint>
 # commandLine   -- Command line to run
 #                  Some special command line parameters are
-#                  @value  -- replace this argument with the parameter from the POST
+#                  #value  -- replace this argument with the parameter from the POST
 #                  <in     -- look for an uploaded file
 #                  >out    -- the process will generate this file for later download
 # description   -- description of the endpoint
-# defaults      -- a hashmap of default values for "@value" parameters
+# defaults      -- a hashmap of default values for "#value" parameters
 
 # this example configuration file exposes 2 endpoints, echo and copy
 # echo simply echos the input and can be called like this:
 # curl -X POST  -v --form Message=hi localhost:9901/rest/service/echo
 
 # copy takes input and output files.  <in must be provided
-# curl -X POST  -v --form in=@README.md --form output=R.md localhost:9901/rest/service/copy
-# NB: "--form input=@README.md" indicates that curl should send README.md as the form parameter "input"
+# curl -X POST  -v --form in=#README.md --form output=R.md localhost:9901/rest/service/copy
+# NB: "--form input=#README.md" indicates that curl should send README.md as the form parameter "input"
 #     and the output filename is set to "R.md"
 #
 # to retrieve the output data, first find the UUID in the response, and request the file
@@ -23,7 +23,7 @@
 
 # Here is the copy example using jq(http://stedolan.github.io/jq/) to help a bit
 # 
-# id=`curl --silent -X POST --form in=@README.md --form out=small_file.txt localhost:9901/rest/service/copy | jq -r .uuid`
+# id=`curl --silent -X POST --form in=#README.md --form out=small_file.txt localhost:9901/rest/service/copy | jq -r .uuid`
 # wget --content-disposition localhost:9901/rest/job/$id/file/output
 
 
@@ -47,5 +47,5 @@ services:
     commandLine: ["/simpleReg", "-f","<fixed","-m", "<moving","-o", ">registered"]
   - endPoint: n4
     commandLine: ["/n4bias.sh", "-f","<fixed","-o", ">registered"]
-    # commandLine: ["./simpleReg", "-d", "@dimension","-f","<fixed","-m", "<moving","-e", ">registered","-w",">warped", "-i",">inverse"]
+    # commandLine: ["./simpleReg", "-d", "#dimension","-f","<fixed","-m", "<moving","-e", ">registered","-w",">warped", "-i",">inverse"]
 

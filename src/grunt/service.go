@@ -61,11 +61,11 @@ func (service *Service) setup() *Service {
 	service.InputFiles = make([]string, 0)
 	service.OutputFiles = make([]string, 0)
 	for _, arg := range service.CommandLine {
-		// Do we start with an @?
+		// Do we start with an #?
 		key := arg[1:]
 		prefix := arg[0]
 		isArg := false
-		if prefix == '@' {
+		if prefix == '#' {
 			isArg = true
 			service.Parameters = append(service.Arguments, key)
 		} else if prefix == '<' {
@@ -163,10 +163,10 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		return
 	}
 	for _, arg := range service.CommandLine {
-		// Do we start with an @?
+		// Do we start with an #?
 		key := arg[1:]
 		prefix := arg[0]
-		if prefix == '@' {
+		if prefix == '#' {
 			// Lookup first in form
 			if request.MultipartForm.Value[key] != nil {
 				cl = append(cl, request.MultipartForm.Value[key][0])
