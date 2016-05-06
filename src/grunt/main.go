@@ -22,6 +22,7 @@ type SMTP struct {
 
 type Config struct {
 	Services        []*Service          `json:"services"`
+	SlicerServices  []*SlicerService    `yaml:"cli" json:ignore`
 	ServiceMap      map[string]*Service `json:omit`
 	Mail            SMTP
 	Server          string
@@ -63,6 +64,16 @@ func main() {
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		log.Fatalf("Error in YML parsing: %v", err)
+	}
+
+	for _, ss := range config.SlicerServices {
+		log.Printf("Found %+v Slicer service\n", *ss)
+		s, err := CreateService(ss.Executable)
+		if err != nil {
+			log.Fatalf("Error constructing Slicer CLI: %v", err)
+		}
+		s.EndPoint = ss.EndPoint
+		config.Services = append(config.Services, s)
 	}
 
 	// Register the main grunt services

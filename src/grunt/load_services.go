@@ -10,8 +10,9 @@ import (
 )
 
 type ConfigD struct {
-	Name     string
-	Services []*Service
+	Name           string
+	Services       []*Service
+	SlicerServices []*SlicerService `yml:"cli"`
 }
 
 func loadServices(configDirectory string) error {
@@ -36,6 +37,14 @@ func loadServices(configDirectory string) error {
 		err = yaml.Unmarshal(data, &configD)
 		if err != nil {
 			return fmt.Errorf("Error in YML parsing: %v", err)
+		}
+
+		for _, ss := range configD.SlicerServices {
+			s, err := CreateService(ss.Executable)
+			if err != nil {
+				return fmt.Errorf("Error constructing Slicer CLI: %v", err)
+			}
+			configD.Services = append(configD.Services, s)
 		}
 
 		// Advertise in Consul
