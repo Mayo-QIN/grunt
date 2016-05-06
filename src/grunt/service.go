@@ -41,6 +41,8 @@ type Job struct {
 	StartTime         time.Time         `json:"start_time"`
 	EndTime           time.Time         `json:"end_time"`
 	Status            string            `json:"status"`
+	Host              string            `json:"host"`
+	Port              int               `json:"port"`
 	Address           []string          `json:"address"`
 	Endpoint          string            `json:"endpoint"`
 
@@ -142,6 +144,8 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		CommandLine: service.CommandLine,
 		FileMap:     make(map[string]string),
 		Endpoint:    service.EndPoint,
+		Host:        advertisedHost,
+		Port:        advertisedPort,
 	}
 
 	// do we have an email address?
