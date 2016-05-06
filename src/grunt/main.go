@@ -58,7 +58,7 @@ func main() {
 	gruntfile := flag.Arg(0)
 	data, err := ioutil.ReadFile(gruntfile)
 	if err != nil {
-		log.Fatal("Error reading %v: %v", gruntfile, err)
+		log.Fatalf("Error reading %v: %v", gruntfile, err)
 	}
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
