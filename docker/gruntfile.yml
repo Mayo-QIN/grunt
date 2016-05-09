@@ -27,6 +27,16 @@
 # id=`curl --silent -X POST --form in=#README.md --form out=small_file.txt localhost:9901/rest/service/copy | jq -r .uuid`
 # wget --content-disposition localhost:9901/rest/job/$id/file/output
 
+# The Slicer CLI is supported by grunt, see https://www.slicer.org/slicerWiki/index.php/Documentation/Nightly/Developers/SlicerExecutionModel for details.
+# To expose a Slicer CLI via grunt, add entries like this:
+# cli:
+#   - endPoint: extractskeleton
+#     executable: /Applications/Slicer.app/Contents/lib/Slicer-4.5/cli-modules/ExtractSkeleton
+#   - endPoint: blur
+#     executable: /Applications/Slicer.app/Contents/lib/Slicer-4.5/cli-modules/GaussianBlurImageFilter
+#
+# This example will create 2 extra endpoints, extractskeleton and blur corresponding to the
+# executables at the paths listed.
 
 # This is the hostname:port that the server is running on.
 # Used for logging and email

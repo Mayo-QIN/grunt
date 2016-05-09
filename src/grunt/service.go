@@ -21,6 +21,11 @@ import (
 var jobMutex sync.Mutex
 var jobs = make(map[string]*Job)
 
+type SlicerService struct {
+	EndPoint   string `yaml:"endPoint"`
+	Executable string `yaml:"executable"`
+}
+
 type Service struct {
 	EndPoint    string            `yaml:"endPoint" json:"end_point"`
 	CommandLine []string          `yaml:"commandLine" json:"command_line"`
@@ -55,11 +60,17 @@ type Job struct {
 }
 
 // Parse our argements
-func (service *Service) setup() *Service {
+func NewService() *Service {
+	var service Service
+	service.Defaults = make(map[string]string)
 	service.Arguments = make([]string, 0)
 	service.Parameters = make([]string, 0)
 	service.InputFiles = make([]string, 0)
 	service.OutputFiles = make([]string, 0)
+	return &service
+}
+
+func (service *Service) setup() *Service {
 	for _, arg := range service.CommandLine {
 		// Do we start with an #?
 		key := arg[1:]

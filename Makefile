@@ -49,8 +49,10 @@ src/grunt/assets.go: $(shell find assets -type f) bin/go-bindata
 bin/go-bindata:
 	go get -u github.com/jteeuwen/go-bindata/...
 
-test: grunt
-	go test grunt/...
+test: debug = -debug
+test:
+	go test -c grunt/...
+	go test -v grunt/...
 
 benchmarks: fmt
 	go test -run=XXX -bench . -v grunt/...
@@ -58,7 +60,7 @@ benchmarks: fmt
 run: debug = -debug
 
 run: grunt assets
-	bin/grunt gruntfile.yml
+	bin/grunt docker/gruntfile.yml
 
 clean:
 	go clean grunt/...
@@ -93,5 +95,9 @@ rundockers:
 	docker run  -p 9928:9901 -d --link consul:consul -e ADVERTISED_PORT=9928 -e ADVERTISED_HOST=192.168.99.100 pesscara/ants
 	docker run  -p 9929:9901 -d --link consul:consul -e ADVERTISED_PORT=9929 -e ADVERTISED_HOST=192.168.99.100 pesscara/machinelearn
 	# docker run  -p 9940:9901 -d --link consul:consul -e ADVERTISED_PORT=9940 -e ADVERTISED_HOST=192.168.99.100 pesscara/machinelearn
+
+docker-ip?=$(shell /usr/local/bin/docker-machine ip default)
+naked: bin/grunt
+	ADVERTISED_PORT=9902 ADVERTISED_HOST=localhost CONSUL_PORT_8500_TCP_ADDR=${docker-ip} CONSUL_PORT=8500 bin/grunt gf.yml
 
 .PHONY: ants grunt 
