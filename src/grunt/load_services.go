@@ -12,7 +12,7 @@ import (
 type ConfigD struct {
 	Name           string
 	Services       []*Service
-	SlicerServices []*SlicerService `yml:"cli"`
+	SlicerServices []*SlicerService `yaml:"cli"`
 }
 
 func loadServices(configDirectory string) error {
@@ -44,6 +44,7 @@ func loadServices(configDirectory string) error {
 			if err != nil {
 				return fmt.Errorf("Error constructing Slicer CLI: %v", err)
 			}
+			log.Printf("\tcreated slicer service %v", s.EndPoint)
 			configD.Services = append(configD.Services, s)
 		}
 

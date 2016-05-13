@@ -72,6 +72,9 @@ bin/grunt-docker: fmt assets deps
 demo: bin/grunt-docker
 	docker build -t pesscara/grunt -f docker/grunt.Dockerfile .
 
+slicer: demo
+	docker build -t pesscara/slicer -f docker/slicer.Dockerfile .
+
 ants:
 	docker build -t pesscara/ants -f docker/ants.Dockerfile .
 

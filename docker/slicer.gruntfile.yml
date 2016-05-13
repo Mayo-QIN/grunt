@@ -1,8 +1,131 @@
 
-services:
-  - endPoint: slicer
-    commandLine: ["echo", "#Message"]
-    description: print a message
-    defaults:
-      Message: "Hi From Grunt"
+cli:
+  - endpoint: ACPCTransform
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ACPCTransform
+  - endpoint: AddScalarVolumes
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/AddScalarVolumes
+  - endpoint: BRAINSDWICleanup
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/BRAINSDWICleanup
+  - endpoint: BRAINSDemonWarp
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/BRAINSDemonWarp
+  - endpoint: BRAINSFit
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/BRAINSFit
+  - endpoint: BRAINSLabelStats
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/BRAINSLabelStats
+  - endpoint: BRAINSROIAuto
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/BRAINSROIAuto
+  - endpoint: BRAINSResample
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/BRAINSResample
+  - endpoint: BRAINSResize
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/BRAINSResize
+  - endpoint: BRAINSStripRotation
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/BRAINSStripRotation
+  - endpoint: BRAINSTransformConvert
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/BRAINSTransformConvert
+  - endpoint: BSplineToDeformationField
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/BSplineToDeformationField
+  - endpoint: CastScalarVolume
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/CastScalarVolume
+  - endpoint: CheckerBoardFilter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/CheckerBoardFilter
+  - endpoint: CreateDICOMSeries
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/CreateDICOMSeries
+  - endpoint: CurvatureAnisotropicDiffusion
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/CurvatureAnisotropicDiffusion
+  - endpoint: DTIexport
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/DTIexport
+  - endpoint: DTIimport
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/DTIimport
+  - endpoint: DWIConvert
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/DWIConvert
+  - endpoint: DWIJointRicianLMMSEFilter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/DWIJointRicianLMMSEFilter
+  - endpoint: DWIRicianLMMSEFilter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/DWIRicianLMMSEFilter
+  - endpoint: DWIToDTIEstimation
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/DWIToDTIEstimation
+  - endpoint: DWIUnbiasedNonLocalMeansFilter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/DWIUnbiasedNonLocalMeansFilter
+  - endpoint: DiffusionTensorScalarMeasurements
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/DiffusionTensorScalarMeasurements
+  - endpoint: DiffusionWeightedVolumeMasking
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/DiffusionWeightedVolumeMasking
+  - endpoint: EMSegmentCommandLine
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/EMSegmentCommandLine
+  - endpoint: EMSegmentTransformToNewFormat
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/EMSegmentTransformToNewFormat
+  - endpoint: ExecutionModelTour
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ExecutionModelTour
+  - endpoint: ExpertAutomatedRegistration
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ExpertAutomatedRegistration
+  - endpoint: ExtractSkeleton
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ExtractSkeleton
+  - endpoint: FiberBundleLabelSelect
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/FiberBundleLabelSelect
+  - endpoint: FiberTractMeasurements
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/FiberTractMeasurements
+  - endpoint: FiducialRegistration
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/FiducialRegistration
+  - endpoint: GaussianBlurImageFilter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/GaussianBlurImageFilter
+  - endpoint: GradientAnisotropicDiffusion
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/GradientAnisotropicDiffusion
+  - endpoint: GrayscaleFillHoleImageFilter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/GrayscaleFillHoleImageFilter
+  - endpoint: GrayscaleGrindPeakImageFilter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/GrayscaleGrindPeakImageFilter
+  - endpoint: GrayscaleModelMaker
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/GrayscaleModelMaker
+  - endpoint: HistogramMatching
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/HistogramMatching
+  - endpoint: ImageLabelCombine
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ImageLabelCombine
+  - endpoint: IslandRemoval
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/IslandRemoval
+  - endpoint: LabelMapSmoothing
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/LabelMapSmoothing
+  - endpoint: MaskScalarVolume
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/MaskScalarVolume
+  - endpoint: MedianImageFilter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/MedianImageFilter
+  - endpoint: MergeModels
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/MergeModels
+  - endpoint: ModelMaker
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ModelMaker
+  - endpoint: ModelToLabelMap
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ModelToLabelMap
+  - endpoint: MultiplyScalarVolumes
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/MultiplyScalarVolumes
+  - endpoint: N4ITKBiasFieldCorrection
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/N4ITKBiasFieldCorrection
+  - endpoint: OrientScalarVolume
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/OrientScalarVolume
+  - endpoint: OtsuThresholdImageFilter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/OtsuThresholdImageFilter
+  - endpoint: PETStandardUptakeValueComputation
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/PETStandardUptakeValueComputation
+  - endpoint: PerformMetricTest
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/PerformMetricTest
+  - endpoint: ProbeVolumeWithModel
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ProbeVolumeWithModel
+  - endpoint: ResampleDTIVolume
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ResampleDTIVolume
+  - endpoint: ResampleScalarVectorDWIVolume
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ResampleScalarVectorDWIVolume
+  - endpoint: ResampleScalarVolume
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ResampleScalarVolume
+  - endpoint: RobustStatisticsSegmenter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/RobustStatisticsSegmenter
+  - endpoint: SimpleRegionGrowingSegmentation
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/SimpleRegionGrowingSegmentation
+  - endpoint: SubtractScalarVolumes
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/SubtractScalarVolumes
+  - endpoint: ThresholdScalarVolume
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/ThresholdScalarVolume
+  - endpoint: TractographyLabelMapSeeding
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/TractographyLabelMapSeeding
+  - endpoint: VBRAINSDemonWarp
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/VBRAINSDemonWarp
+  - endpoint: VotingBinaryHoleFillingImageFilter
+    executable: /Slicer-4.5.0-1-linux-amd64/lib/Slicer-4.5/cli-modules/VotingBinaryHoleFillingImageFilter  
     
