@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -43,6 +45,7 @@ type Job struct {
 	CommandLine       []string          `yaml:"commandLine" json:"command_line"`
 	ParsedCommandLine []string          `json:"-"`
 	FileMap           map[string]string `json:"-"`
+	WorkingDirectory  string            `json:"-"`
 	StartTime         time.Time         `json:"start_time"`
 	EndTime           time.Time         `json:"end_time"`
 	Status            string            `json:"status"`
@@ -173,6 +176,7 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	job.WorkingDirectory = dir
 	for _, arg := range service.CommandLine {
 		// Do we start with an #?
 		key := arg[1:]
@@ -297,6 +301,56 @@ func GetJobFile(w http.ResponseWriter, request *http.Request) {
 	file := job.FileMap[vars["filename"]]
 	w.Header().Set("Content-Disposition", "attachment;filename="+filepath.Base(file))
 	http.ServeFile(w, request, file)
+}
+
+func GetJobZip(w http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	key := vars["id"]
+	job := jobs[key]
+	if job == nil {
+		http.Error(w, fmt.Sprintf("job %v does not exist", key), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Disposition", "attachment;filename="+job.Endpoint+"-"+job.UUID+".zip")
+	gz := zip.NewWriter(w)
+	defer gz.Close()
+
+	filepath.Walk(job.WorkingDirectory, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		header, err := zip.FileInfoHeader(info)
+		if err != nil {
+			return err
+		}
+
+		header.Name = filepath.Join(job.UUID, strings.TrimPrefix(path, job.WorkingDirectory))
+
+		if info.IsDir() {
+			header.Name += "/"
+		} else {
+			header.Method = zip.Deflate
+		}
+
+		writer, err := gz.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+
+		if info.IsDir() {
+			return nil
+		}
+
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		_, err = io.Copy(writer, file)
+		return err
+	})
 }
 
 func GetHealth(w http.ResponseWriter, request *http.Request) {

@@ -117,6 +117,7 @@ func main() {
 	r.HandleFunc("/rest/job/{id}", GetJob).Methods("GET")
 	r.HandleFunc("/rest/job/wait/{id}", WaitForJob).Methods("GET")
 	r.HandleFunc("/rest/job/{id}/file/{filename}", GetJobFile).Methods("GET")
+	r.HandleFunc("/rest/job/{id}/zip", GetJobZip).Methods("GET")
 
 	r.HandleFunc("/help.html", Help).Methods("GET")
 	r.HandleFunc("/jobs.html", Jobs).Methods("GET")

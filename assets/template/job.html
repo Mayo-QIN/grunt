@@ -36,7 +36,10 @@
           </tr>
         </thead>
         <tbody>
+          <tr>
+            
           {{$uuid := .UUID}}
+          <td><a href="/rest/job/{{$uuid}}/zip">Zip file of all inputs and outputs</a></td>
           {{range $key, $value := .FileMap}}
           <tr>
             <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
