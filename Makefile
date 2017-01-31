@@ -68,6 +68,13 @@ demo: bin/grunt-docker
 ants:
 	docker build -t pesscara/ants -f docker/ants.Dockerfile .
 
+slicer:
+	docker build -t pesscara/slicer -f docker/slicer.Dockerfile .
+
+slicer.run:
+	docker run --rm -p 9901:9901 -it pesscara/slicer
+
+
 machinelearn:
 	docker build -t pesscara/machinelearn -f docker/python.Dockerfile .
 
