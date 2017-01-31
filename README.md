@@ -125,7 +125,7 @@ curl -v localhost:9901/rest/job/wait/$id
 ```
 
 ##Notes 
-###Delete al docker images
+###Delete all docker images
 
     # Delete all images
     docker images -q |xargs docker rmi

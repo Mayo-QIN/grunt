@@ -12,6 +12,8 @@ Makefile for grunt
   grunt        - build the grunt executable into bin/grunt
   demo         - build a docker that offers basic example
   ants         - build a docker that is aimed to registration with ANTs
+  slicer       - build a docker running all Slicer CLIs
+  slicer.run   - run the pesscara/slicer Docker interactively
   machinelearn - build a docker for machine learning
   tools        - run 'go get' to install missing tools
 
