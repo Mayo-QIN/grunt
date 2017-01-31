@@ -1,8 +1,105 @@
+server: localhost:9901
+# Working directory
+# This is the directory path used for working files. If left blank,
+# use a system temp directory.
+# NB: To run in the pesscara/grunt docker, this must be set to /data
+directory: /data
 
-services:
-  - endPoint: slicer
-    commandLine: ["echo", "#Message"]
-    description: print a message
-    defaults:
-      Message: "Hi From Grunt"
-    
+# Report Warn status to Consul when we have more than warnLevel jobs
+warnLevel: 3
+# Report Critical status to Consul when we have more than criticalLevel jobs
+warnLevel: 5
+
+# These are the CLI scripts that do not require X11 as determined by:
+# export LD_LIBRARY_PATH=/grunt/Slicer-4.6.2-linux-amd64/lib/Slicer-4.6/:/grunt/Slicer-4.6.2-linux-amd64/lib/Slicer-4.6/cli-modules:/grunt/Slicer-4.6.2-linux-amd64/lib/Teem-1.12.0/:grunt/Slicer-4.6.2-linux-amd64/lib/Python/lib
+#
+# for exe in /grunt/Slicer-4.6.2-linux-amd64/lib/Slicer-4.6/cli-modules/*; do
+#   $exe --xml >& /dev/null
+#   if [[ $? == 0 ]]; then
+#   echo $exe
+#   fi
+# done
+
+cli:
+  - endPoint: AddScalarVolumes
+    executable: AddScalarVolumes
+  - endPoint: BRAINSDWICleanup
+    executable: BRAINSDWICleanup
+  - endPoint: BRAINSDemonWarp
+    executable: BRAINSDemonWarp
+  - endPoint: BRAINSFit
+    executable: BRAINSFit
+  - endPoint: BRAINSLabelStats
+    executable: BRAINSLabelStats
+  - endPoint: BRAINSROIAuto
+    executable: BRAINSROIAuto
+  - endPoint: BRAINSResample
+    executable: BRAINSResample
+  - endPoint: BRAINSResize
+    executable: BRAINSResize
+  - endPoint: BRAINSStripRotation
+    executable: BRAINSStripRotation
+  - endPoint: BRAINSTransformConvert
+    executable: BRAINSTransformConvert
+  - endPoint: BSplineToDeformationField
+    executable: BSplineToDeformationField
+  - endPoint: CastScalarVolume
+    executable: CastScalarVolume
+  - endPoint: CheckerBoardFilter
+    executable: CheckerBoardFilter
+  - endPoint: CreateDICOMSeries
+    executable: CreateDICOMSeries
+  - endPoint: CurvatureAnisotropicDiffusion
+    executable: CurvatureAnisotropicDiffusion
+  - endPoint: DWIConvert
+    executable: DWIConvert
+  - endPoint: ExpertAutomatedRegistration
+    executable: ExpertAutomatedRegistration
+  - endPoint: ExtractSkeleton
+    executable: ExtractSkeleton
+  - endPoint: FiducialRegistration
+    executable: FiducialRegistration
+  - endPoint: GaussianBlurImageFilter
+    executable: GaussianBlurImageFilter
+  - endPoint: GradientAnisotropicDiffusion
+    executable: GradientAnisotropicDiffusion
+  - endPoint: GrayscaleFillHoleImageFilter
+    executable: GrayscaleFillHoleImageFilter
+  - endPoint: GrayscaleGrindPeakImageFilter
+    executable: GrayscaleGrindPeakImageFilter
+  - endPoint: HistogramMatching
+    executable: HistogramMatching
+  - endPoint: ImageLabelCombine
+    executable: ImageLabelCombine
+  - endPoint: LabelMapSmoothing
+    executable: LabelMapSmoothing
+  - endPoint: MaskScalarVolume
+    executable: MaskScalarVolume
+  - endPoint: MedianImageFilter
+    executable: MedianImageFilter
+  - endPoint: MultiplyScalarVolumes
+    executable: MultiplyScalarVolumes
+  - endPoint: N4ITKBiasFieldCorrection
+    executable: N4ITKBiasFieldCorrection
+  - endPoint: OrientScalarVolume
+    executable: OrientScalarVolume
+  - endPoint: OtsuThresholdImageFilter
+    executable: OtsuThresholdImageFilter
+  - endPoint: PerformMetricTest
+    executable: PerformMetricTest
+  - endPoint: ResampleScalarVectorDWIVolume
+    executable: ResampleScalarVectorDWIVolume
+  - endPoint: ResampleScalarVolume
+    executable: ResampleScalarVolume
+  - endPoint: RobustStatisticsSegmenter
+    executable: RobustStatisticsSegmenter
+  - endPoint: SimpleRegionGrowingSegmentation
+    executable: SimpleRegionGrowingSegmentation
+  - endPoint: SubtractScalarVolumes
+    executable: SubtractScalarVolumes
+  - endPoint: ThresholdScalarVolume
+    executable: ThresholdScalarVolume
+  - endPoint: VBRAINSDemonWarp
+    executable: VBRAINSDemonWarp
+  - endPoint: VotingBinaryHoleFillingImageFilter
+    executable: VotingBinaryHoleFillingImageFilter
