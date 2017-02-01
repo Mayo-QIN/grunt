@@ -90,9 +90,13 @@ func CreateServiceFromXML(path string, out string) (*Service, error) {
 				}
 				f := ""
 				if p.Longflag != "" {
+					// Sometimes, the "--" is left on long flags...
+					p.Longflag = strings.TrimPrefix(p.Longflag, "--")
 					f = "--" + p.Longflag
 				}
 				if p.Flag != "" {
+					// Sometimes, the "-" is left on flags...
+					p.Flag = strings.TrimPrefix(p.Flag, "-")
 					f = "-" + p.Flag
 				}
 				if p.Default != "" {
