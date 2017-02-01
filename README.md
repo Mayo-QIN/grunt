@@ -1,8 +1,7 @@
 # Grunt
 
-Grunt is a Go server that exposes a REST interface to command line programs.  Grunt is configured through a simple YML file.
+Grunt is a Go server that exposes a REST interface to command line programs.  Grunt is configured through a simple YML file or CLI XML.
 
-Grunt development was sponsored by NCI Grant CA160045.
 
 ## Build
 
@@ -96,9 +95,6 @@ wget --content-disposition localhost:9901/rest/job/$id/file/out
 ```
 
 
-## ToDo
-
-grunt can not write `.nii.gz` files correctly, comes out at `*.gz` without the `nii` part.
 
 ## Building
 
@@ -125,10 +121,29 @@ curl -v localhost:9901/rest/job/wait/$id
 ```
 
 ## Docker notes
-### Delete all docker images
+### Delete the docker images you do not need. 
+
+Once the docker is up an running 
+
+perform:
+
+`docker ps `
+
+or 
+
+`docker ps -a ` if the container was stoped. 
+
+The output will be something like 
+
+    |=> docker ps 
+    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
+    aa4f094a4a55        a4a20e41aa68        "/bin/sh -c 'curl ..."   6 minutes ago       Up 6 minutes        9901/tcp            romantic_meitner
+
+
+select the conaitner ID and perform
 
 ```
-docker rmi $(docker images -q)
+docker rmi {CONTAINER ID}
 ```
 
 ### Stop all contaiers
@@ -137,10 +152,23 @@ docker rmi $(docker images -q)
 docker stop $(docker ps -a -q)
 ```
 
-### Remove all containers
+if you need to stop a specific container 
+```
+docker stop {CONTAINER ID}
+```
+
+### Remove a specific iamge 
+
+Perform 
+
+`docker images`
+
+select the image container ID 
+
+and execute 
 
 ```
-docker rm $(docker ps -a -q)
+docker rm {CONTAINER ID}
 ```
 
 
