@@ -124,12 +124,26 @@ curl -v localhost:9901/rest/job/$id
 curl -v localhost:9901/rest/job/wait/$id
 ```
 
-##Notes 
-###Delete all docker images
+## Docker notes
+### Delete all docker images
 
-    # Delete all images
-    docker images -q |xargs docker rmi
+```
+docker rmi $(docker images -q)
+```
 
-##Acknowledgement 
+### Stop all contaiers
+
+```
+docker stop $(docker ps -a -q)
+```
+
+### Remove all containers
+
+```
+docker rm $(docker ps -a -q)
+```
+
+
+## Acknowledgement 
 
 Supported by the NCI Grant CA160045
