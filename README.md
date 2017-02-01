@@ -79,6 +79,12 @@ curl -X POST  -v --form in=@big_file.txt --form out=small_file.txt localhost:990
 NB: "--form in=@big_file.txt" indicates that curl should send big_file.txt as the form parameter `in`
 and the output filename is set to "small_file.txt"
 
+the following example leverages the slicer's CLI xml configureation
+
+```
+curl -X POST  -v --form neighborhood=1,1,1 --form inputVolume=@somefile.nii.gz --form outputVolume=somefile.nii.gz localhost:9901/rest/service/MedianImageFilter
+
+```
 to retrieve the output data, first find the UUID in the response, and request the file
 
 ```
