@@ -32,7 +32,7 @@ type Service struct {
 	EndPoint    string            `yaml:"endPoint" json:"end_point"`
 	CommandLine []string          `yaml:"commandLine" json:"command_line"`
 	Description string            `json:"description"`
-	Defaults    map[string]string `yaml:defaults json:"defaults"`
+	Defaults    map[string]string `json:"defaults" yaml:defaults`
 	Arguments   []string          `json:"arguments"`
 	Parameters  []string          `json:"parameters"`
 	InputFiles  []string          `json:"input_files"`

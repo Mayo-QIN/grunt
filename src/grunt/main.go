@@ -22,14 +22,14 @@ type SMTP struct {
 
 type Config struct {
 	Services        []*Service          `json:"services"`
-	SlicerServices  []*SlicerService    `yaml:"cli" json:ignore`
-	ServiceMap      map[string]*Service `json:omit`
-	Mail            SMTP
-	Server          string
-	Directory       string
-	ConfigDirectory string `yaml:"configDirectory"`
-	WarnLevel       int    `yaml:"warnLevel"`
-	CriticalLevel   int    `yaml:"criticalLevel"`
+	SlicerServices  []*SlicerService    `yaml:"cli" json:"-"`
+	ServiceMap      map[string]*Service `json:"-"`
+	Mail            SMTP                `json:"mail"`
+	Server          string              `json:"server"`
+	Directory       string              `json:"working_directory"`
+	ConfigDirectory string              `json:"config_directory" yaml:"configDirectory"`
+	WarnLevel       int                 `json:"warn_level" yaml:"warnLevel"`
+	CriticalLevel   int                 `json:"critical_level" yaml:"criticalLevel"`
 }
 
 var config Config
@@ -50,6 +50,7 @@ func main() {
 	config.ServiceMap = make(map[string]*Service)
 	config.WarnLevel = 3
 	config.CriticalLevel = 5
+	config.Mail.Port = 25
 
 	flag.Parse()
 
