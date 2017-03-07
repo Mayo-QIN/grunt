@@ -32,7 +32,7 @@ type Service struct {
 	EndPoint    string            `yaml:"endPoint" json:"end_point"`
 	CommandLine []string          `yaml:"commandLine" json:"command_line"`
 	Description string            `json:"description"`
-	Defaults    map[string]string `json:"defaults" yaml:defaults`
+	Defaults    map[string]string `json:"defaults" yaml:"defaults"`
 	Arguments   []string          `json:"arguments"`
 	Parameters  []string          `json:"parameters"`
 	InputFiles  []string          `json:"input_files"`
@@ -40,7 +40,7 @@ type Service struct {
 }
 
 type Job struct {
-	sync.Mutex        `json:ignore`
+	sync.Mutex        `json:"-"`
 	UUID              string            `json:"uuid"`
 	CommandLine       []string          `yaml:"commandLine" json:"command_line"`
 	ParsedCommandLine []string          `json:"-"`
@@ -266,7 +266,7 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		Cleanup(&job)
 	}()
 
-	json.NewEncoder(w).Encode(job)
+	json.NewEncoder(w).Encode(&job)
 	jobs[job.UUID] = &job
 }
 

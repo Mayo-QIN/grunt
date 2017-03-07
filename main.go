@@ -1,5 +1,7 @@
 package main
 
+//go:generate bin/go-bindata -prefix assets -o assets.go assets/...
+
 import (
 	"flag"
 	"fmt"

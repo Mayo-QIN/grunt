@@ -10,3 +10,4 @@ docker/diab.csv
 docker/results.zip.zip
 docker/output/diab.csv
 grunt-tmp
+.GOPATH
