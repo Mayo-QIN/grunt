@@ -9,15 +9,17 @@ MAINTAINER "Daniel Blezek" blezek.daniel@mayo.edu
 VOLUME /data
 
 # Build grunt
-RUN yum install -y golang
-RUN go get github.com/Mayo-QIN/grunt
+RUN yum install -y golang git wget curl
+ENV GOPATH=/root
 
-
+# Copy local files into GOPATH
+ADD .  $GOPATH/src/github.com/Mayo-QIN/grunt/
+RUN go install github.com/Mayo-QIN/grunt
 
 # Install files
 RUN mkdir -p /grunt.d
-COPY bin/grunt-docker /bin/grunt
-COPY docker/gruntfile.yml /gruntfile.yml
+RUN cp /root/bin/grunt /bin/grunt
+COPY gruntfile.yml /gruntfile.yml
 
 # Start grunt in /data with the given gruntfile
 WORKDIR /data

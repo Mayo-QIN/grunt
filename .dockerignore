@@ -1,6 +1,2 @@
-# Exclude everything
-*
-
-# Exceptions
-!docker
-!bin/grunt-docker
+.git
+.GOPATH
