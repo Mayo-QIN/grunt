@@ -8,6 +8,12 @@ MAINTAINER "Daniel Blezek" blezek.daniel@mayo.edu
 # Create a user and do everything as that user
 VOLUME /data
 
+# Build grunt
+RUN yum install -y golang
+RUN go get github.com/Mayo-QIN/grunt
+
+
+
 # Install files
 RUN mkdir -p /grunt.d
 COPY bin/grunt-docker /bin/grunt
