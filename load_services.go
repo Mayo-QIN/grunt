@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v2"
 )
 
 type ConfigD struct {

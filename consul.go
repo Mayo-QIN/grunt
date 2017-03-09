@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
-	consulclient "github.com/hashicorp/consul/api"
-	"github.com/satori/go.uuid"
 	"log"
 	"os"
 	"os/signal"
 	"strconv"
 	"syscall"
 	"time"
+
+	consulclient "github.com/hashicorp/consul/api"
+	"github.com/satori/go.uuid"
 )
 
 var serviceIDs []string
