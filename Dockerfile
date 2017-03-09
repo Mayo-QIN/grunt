@@ -9,8 +9,11 @@ MAINTAINER "Daniel Blezek" blezek.daniel@mayo.edu
 VOLUME /data
 
 # Build grunt
-RUN yum install -y golang git wget curl
+RUN yum install -y git wget curl
+ADD https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz /root
+RUN tar -C /usr/local -xvzf /root/go1.7.linux-amd64.tar.gz
 ENV GOPATH=/root
+ENV PATH=/usr/local/go/bin:${PATH}
 
 # Copy local files into GOPATH
 ADD .  $GOPATH/src/github.com/Mayo-QIN/grunt/

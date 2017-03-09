@@ -39,8 +39,8 @@ Check the grunt web interface http://localhost:9901
 | endpoint                         | method | parameters       | description                                                 |
 |----------------------------------|--------|------------------|-------------------------------------------------------------|
 | `/rest/service`                  | GET    | --               | List the services available                                 |
-| `/rest/service/{id}              | GET    | `id`             | Detail for service `id`                                     |
-| `/rest/service/{id}              | POST   | `id`             | Start a new Job using service `id`                          |
+| `/rest/service/{id}`             | GET    | `id`             | Detail for service `id`                                     |
+| `/rest/service/{id}`             | POST   | `id`             | Start a new Job using service `id`                          |
 | `/rest/job/{id}`                 | GET    | `id`             | Details about a Job                                         |
 | `/rest/job/wait/{id}`            | GET    | `id`             | Does not return until the Job completes                     |
 | `/rest/job/{id}/file/{filename}` | GET    | `id`, `filename` | Retrieve the file `filename` from the Job specified by `id` |
