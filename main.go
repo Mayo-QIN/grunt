@@ -1,17 +1,21 @@
 package main
 
-//go:generate bin/go-bindata -prefix assets -o assets.go assets/...
+//go:generate bin/go-bindata -prefix assets -o assets.go assets/... README.md
+//go:generate bin/go-bindata -debug -pkg dassets -prefix assets -o dassets/assets.go assets/... README.md
 
 import (
 	"flag"
 	"fmt"
-	"github.com/elazarl/go-bindata-assetfs"
-	"github.com/gorilla/mux"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/Mayo-QIN/grunt/dassets"
+
+	assetfs "github.com/elazarl/go-bindata-assetfs"
+	"github.com/gorilla/mux"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type SMTP struct {
@@ -39,6 +43,7 @@ var consulHost string
 var consulPort int
 var advertisedHost string
 var advertisedPort int
+var debug bool
 
 func main() {
 	var port int
@@ -47,6 +52,7 @@ func main() {
 	flag.IntVar(&consulPort, "consul-port", 0, "specify Consul port to use.  defaults to 0.  Also set through the CONSULT_HOST or CONSUL_PORT_8500_TCP_PORT environment variable set by Docker")
 	flag.StringVar(&advertisedHost, "advertised", "", "specify Advertised host. defaults to none.  Also set through the ADVERTISED_HOST environment variable.")
 	flag.IntVar(&advertisedPort, "advertised-port", 0, "specify Advertised port to use.  defaults to 0. Also set through the ADVERTISED_PORT environment variable.")
+	flag.BoolVar(&debug, "d", false, "Debug")
 
 	// Set config defaults
 	config.ServiceMap = make(map[string]*Service)
@@ -122,15 +128,20 @@ func main() {
 	r.HandleFunc("/rest/job/{id}/file/{filename}", GetJobFile).Methods("GET")
 	r.HandleFunc("/rest/job/{id}/zip", GetJobZip).Methods("GET")
 
-	r.HandleFunc("/help.html", Help).Methods("GET")
-	r.HandleFunc("/jobs.html", Jobs).Methods("GET")
+	r.HandleFunc("/{name}", ExecTemplate).Methods("GET")
+	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/grunt.html", http.StatusFound)
+	})
+
 	r.HandleFunc("/job/{id}", JobDetail).Methods("GET")
-	r.HandleFunc("/services.html", Services).Methods("GET")
-	r.HandleFunc("/submit/{id}.html", Submit).Methods("GET")
+	r.HandleFunc("/service/{id}", ServiceDetail).Methods("GET")
 	r.HandleFunc("/health", GetHealth).Methods("GET")
 
-	r.PathPrefix("/").Handler(http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo}))
-
+	if debug {
+		r.PathPrefix("/static").Handler(http.FileServer(&assetfs.AssetFS{Asset: dassets.Asset, AssetDir: dassets.AssetDir, AssetInfo: dassets.AssetInfo}))
+	} else {
+		r.PathPrefix("/static").Handler(http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir, AssetInfo: AssetInfo}))
+	}
 	http.Handle("/", r)
 	log.Printf("Starting grunt on http://localhost:%v", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))

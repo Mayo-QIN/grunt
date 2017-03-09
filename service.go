@@ -8,11 +8,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/gorilla/mux"
 	uuid "github.com/satori/go.uuid"
@@ -52,6 +50,27 @@ func NewService() *Service {
 }
 
 func (service *Service) setup() *Service {
+	if service.Defaults == nil {
+		service.Defaults = make(map[string]string)
+	}
+	if service.Arguments == nil {
+		service.Arguments = make([]string, 0)
+	}
+	if service.Parameters == nil {
+		service.Parameters = make([]string, 0)
+	}
+	if service.InputFiles == nil {
+		service.InputFiles = make([]string, 0)
+	}
+	if service.OutputFiles == nil {
+		service.OutputFiles = make([]string, 0)
+	}
+	if service.InputZip == nil {
+		service.InputZip = make([]string, 0)
+	}
+	if service.OutputZip == nil {
+		service.OutputZip = make([]string, 0)
+	}
 	for _, arg := range service.CommandLine {
 		// Do we start with an #?
 		key := arg[1:]
@@ -80,18 +99,6 @@ func (service *Service) setup() *Service {
 	return service
 }
 
-// Return the information about a job as JSON
-func JobDetail(w http.ResponseWriter, request *http.Request) {
-	key := mux.Vars(request)["id"]
-	job := jobs[key]
-	if job == nil {
-		http.Error(w, "could not find job", http.StatusNotFound)
-		return
-	}
-	var data = map[string]interface{}{"job": job}
-	Template("job", data, w, request)
-}
-
 // Return all services as JSON
 func GetServices(w http.ResponseWriter, request *http.Request) {
 	json.NewEncoder(w).Encode(config)
@@ -108,6 +115,10 @@ func GetService(w http.ResponseWriter, request *http.Request) {
 func StartService(w http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	service := config.ServiceMap[vars["id"]]
+	if service == nil {
+		http.Error(w, "service not found", http.StatusNotFound)
+		return
+	}
 	log.Printf("Found service %v:%v", vars["id"], service)
 	// Pull out our arguments
 	err := request.ParseMultipartForm(10 * 1024 * 1024)
@@ -146,45 +157,7 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	cmd := exec.Command(job.ParsedCommandLine[0], job.ParsedCommandLine[1:]...)
-	cmd.Dir = job.WorkingDirectory
-	job.StartTime = time.Now()
-	cmd.Stdout = &job.Output
-	cmd.Stderr = &job.Output
-	job.cmd = cmd
-	job.Status = "pending"
-
-	// Launch a go routine to wait
-	go func() {
-		jobMutex.Lock()
-		job.Status = "running"
-		job.cmd.Start()
-		err := job.cmd.Wait()
-		job.EndTime = time.Now()
-		if err != nil {
-			job.Status = "error"
-		} else {
-			if job.cmd.ProcessState.Success() {
-				job.Status = "success"
-			} else {
-				job.Status = "failed"
-			}
-		}
-		jobMutex.Unlock()
-		// Notify waiters
-		log.Printf("%v completed with status %v", job.UUID, job.Status)
-		for _, c := range job.waiters {
-			c <- true
-		}
-
-		// Send email here
-		Email(&job)
-
-		// Cleanup after 120 minutes
-		<-time.After(time.Minute * 120)
-		Cleanup(&job)
-	}()
-
+	job.Start()
 	json.NewEncoder(w).Encode(&job)
 	jobs[job.UUID] = &job
 }
@@ -198,14 +171,7 @@ func GetJob(w http.ResponseWriter, request *http.Request) {
 func WaitForJob(w http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 	job := jobs[vars["id"]]
-	if job.Status == "running" {
-		c := make(chan bool)
-		job.Lock()
-		job.waiters = append(job.waiters, c)
-		job.Unlock()
-		<-c
-		close(c)
-	}
+	job.Wait()
 	json.NewEncoder(w).Encode(job)
 }
 
@@ -219,16 +185,21 @@ func GetJobFile(w http.ResponseWriter, request *http.Request) {
 	}
 	file, ok := job.FileMap[vars["filename"]]
 	if ok {
+		fileToSend := filepath.Join(job.WorkingDirectory, file)
+		log.Printf("Request for %s, sending %s", vars["filename"], fileToSend)
 		w.Header().Set("Content-Disposition", "attachment;filename="+filepath.Base(file))
-		http.ServeFile(w, request, file)
+		http.ServeFile(w, request, fileToSend)
 		return
 	}
 	file, ok = job.ZipMap[vars["filename"]]
 	if ok {
-		outputDirectory := file
-		log.Printf("file: %v", file)
+		outputDirectory := filepath.Join(job.WorkingDirectory, file)
+		zipFilename := filepath.Base(vars["filename"])
+		if !strings.HasSuffix(zipFilename, ".zip") {
+			zipFilename += ".zip"
+		}
 		log.Printf("Requested %v: sending directory %v as a zip file", vars["filename"], outputDirectory)
-		w.Header().Set("Content-Disposition", "attachment; filename=\""+filepath.Base(file)+"\"")
+		w.Header().Set("Content-Disposition", "attachment; filename=\""+zipFilename+"\"")
 		gz := zip.NewWriter(w)
 		defer gz.Close()
 
@@ -236,13 +207,19 @@ func GetJobFile(w http.ResponseWriter, request *http.Request) {
 			if err != nil {
 				return err
 			}
+
+			// Don't create an entry for the root of the directory
+			if path == outputDirectory {
+				return err
+			}
+
 			header, err := zip.FileInfoHeader(info)
 			if err != nil {
 				return err
 			}
 
 			// Take off the path, and a leading "/" to make the output relative
-			header.Name = strings.TrimPrefix(path, file)
+			header.Name = strings.TrimPrefix(path, outputDirectory)
 			header.Name = strings.TrimPrefix(header.Name, "/")
 
 			// log.Printf("Adding %v from %v", header.Name, path)

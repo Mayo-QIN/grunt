@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	humanize "github.com/dustin/go-humanize"
 )
 
 type Job struct {
@@ -34,11 +36,16 @@ type Job struct {
 	waiters []chan bool
 
 	// Running process, NB: the Cmd is started in the Job's WorkingDirectory
-	cmd    *exec.Cmd
-	Output bytes.Buffer `json:"output"`
+	cmd          *exec.Cmd
+	Output       bytes.Buffer `json:"-"`
+	OutputString string       `json:"output"`
 }
 
+// Parse the commandline from the HTTP request
+// The Job will run in the working directory, so paths must be relative.
+// Store away enough information to get files back to the client.
 func (job *Job) ParseCommandLine(request *http.Request) error {
+	log.Printf("Parsing command line for %v", job.UUID)
 	cl := make([]string, 0)
 	dir := job.WorkingDirectory
 	for _, arg := range job.CommandLine {
@@ -70,24 +77,24 @@ func (job *Job) ParseCommandLine(request *http.Request) error {
 			if err != nil {
 				return err
 			}
-			log.Printf("Wrote %v bytes to %v", count, header.Filename)
+			log.Printf("\tSaved uploaded file as %v (%v bytes)", header.Filename, count)
 			fout.Close()
-			cl = append(cl, fout.Name())
+			cl = append(cl, filepath.Base(header.Filename))
 		} else if prefix == '>' {
 			// Write a file...
-			// Save a temp file
 			if request.MultipartForm.Value[key] == nil {
 				return fmt.Errorf("filename must be specified for %v", key)
 			}
-			tmp := filepath.Join(dir, filepath.Base(request.MultipartForm.Value[key][0]))
-			job.FileMap[key] = tmp
-			cl = append(cl, tmp)
+			job.FileMap[key] = filepath.Base(request.MultipartForm.Value[key][0])
+			log.Printf("\tOutput file %v", job.FileMap[key])
+			cl = append(cl, filepath.Base(request.MultipartForm.Value[key][0]))
 		} else if prefix == '^' {
 			// Expect a zip file, create a directory called key, unzip the contents and add to command line
 			v := request.MultipartForm.File[key]
 			if v == nil {
 				return fmt.Errorf("Could not find %v in form data, was expecting uploaded zip file", key)
 			}
+			// Save the uploaded file
 			header := v[0]
 			f, err := header.Open()
 			zipFilename := filepath.Join(dir, filepath.Base(header.Filename)+".zip")
@@ -99,10 +106,10 @@ func (job *Job) ParseCommandLine(request *http.Request) error {
 			if err != nil {
 				return err
 			}
-			log.Printf("Wrote %v bytes to %v", count, header.Filename)
 			fout.Close()
+			defer os.Remove(zipFilename)
 
-			// Make the directory
+			// Make the directory, wrating the contents there
 			dirName := filepath.Join(dir, filepath.Base(key))
 			err = os.Mkdir(dirName, 0700)
 			if err != nil {
@@ -112,20 +119,22 @@ func (job *Job) ParseCommandLine(request *http.Request) error {
 			if err != nil {
 				return err
 			}
-			cl = append(cl, dirName)
+			log.Printf("\tExtracted zip file to %v (%s)", key, humanize.Bytes(uint64(count)))
+			cl = append(cl, filepath.Base(key))
 		} else if prefix == '~' {
 			if request.MultipartForm.Value[key] == nil {
 				return fmt.Errorf("filename must be specified for %v", key)
 			}
-			dirName := filepath.Join(dir, filepath.Base(key))
+
+			job.ZipMap[key] = filepath.Base(request.MultipartForm.Value[key][0])
 			if job.Service.CreateEmptyOutput {
-				err := os.Mkdir(dirName, 0700)
+				err := os.Mkdir(filepath.Join(dir, job.ZipMap[key]), 0700)
 				if err != nil {
 					return err
 				}
 			}
-			job.ZipMap[key] = dirName
-			cl = append(cl, dirName)
+			log.Printf("\tOutput directory %v", job.ZipMap[key])
+			cl = append(cl, job.ZipMap[key])
 		} else {
 			cl = append(cl, arg)
 		}
@@ -133,4 +142,59 @@ func (job *Job) ParseCommandLine(request *http.Request) error {
 	log.Printf("Final command line: %v", cl)
 	job.ParsedCommandLine = cl
 	return nil
+}
+
+func (job *Job) Start() {
+	cmd := exec.Command(job.ParsedCommandLine[0], job.ParsedCommandLine[1:]...)
+	cmd.Dir = job.WorkingDirectory
+	job.StartTime = time.Now()
+	cmd.Stdout = &job.Output
+	cmd.Stderr = &job.Output
+	job.cmd = cmd
+	job.Status = "pending"
+
+	// Launch a go routine to wait
+	go func() {
+		jobMutex.Lock()
+		job.Status = "running"
+		job.cmd.Start()
+		err := job.cmd.Wait()
+		job.EndTime = time.Now()
+		if err != nil {
+			job.Status = "error"
+		} else {
+			if job.cmd.ProcessState.Success() {
+				job.Status = "success"
+			} else {
+				job.Status = "failed"
+			}
+		}
+		jobMutex.Unlock()
+		// Notify waiters
+		log.Printf("%v (%v) completed with status %v", job.Service.EndPoint, job.UUID, job.Status)
+		job.OutputString = job.Output.String()
+		job.Output.Truncate(0)
+		for _, c := range job.waiters {
+			c <- true
+		}
+
+		// Send email here
+		Email(job)
+
+		// Cleanup after 120 minutes
+		<-time.After(time.Minute * 120)
+		Cleanup(job)
+	}()
+
+}
+
+func (job *Job) Wait() {
+	if job.Status == "running" {
+		c := make(chan bool)
+		job.Lock()
+		job.waiters = append(job.waiters, c)
+		job.Unlock()
+		<-c
+		close(c)
+	}
 }

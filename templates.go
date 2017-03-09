@@ -1,33 +1,113 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
+	"log"
 	"net/http"
+	"time"
 
+	humanize "github.com/dustin/go-humanize"
+
+	"github.com/Mayo-QIN/grunt/dassets"
+	"github.com/gorilla/mux"
 	"github.com/imdario/mergo"
+	"github.com/russross/blackfriday"
 )
 
+// Add some helper functions
+var funcs = template.FuncMap{
+	"json": func(v interface{}) (string, error) {
+		a, err := json.Marshal(v)
+		if err != nil {
+			return "", err
+		}
+		return string(a), nil
+	},
+	"humanizeTime": humanize.Time,
+	"now":          time.Now,
+}
+
+var templates = template.New("").Funcs(funcs)
+var helpText = template.HTML("")
+
+func init() {
+	loadTemplates(AssetNames(), Asset)
+}
+
+func loadTemplates(names []string, asset func(name string) ([]byte, error)) {
+	for _, path := range names {
+		bytes, err := asset(path)
+		if err != nil {
+			if debug {
+				log.Printf("Unable to parse: path=%s, err=%s", path, err)
+			} else {
+				log.Panicf("Unable to parse: path=%s, err=%s", path, err)
+			}
+		}
+		templates.New(path).Parse(string(bytes))
+	}
+	bytes, _ := asset("README.md/README.md")
+	helpText = template.HTML(string(blackfriday.MarkdownCommon(bytes)))
+}
+
 func Template(name string, data map[string]interface{}, w http.ResponseWriter, request *http.Request) {
-	var templateData = map[string]interface{}{
+	templateData := map[string]interface{}{
 		"jobs":       jobs,
+		"config":     config,
 		"services":   config.Services,
 		"serviceMap": config.ServiceMap,
+		"help":       helpText,
+		"vars":       mux.Vars(request),
 	}
+
 	// merge in our extra data
 	mergo.Map(&templateData, data)
-	contents, _ := Asset("template/" + name + ".html")
-	t, _ := template.New(name).Parse(string(contents))
-	t.Execute(w, templateData)
+	/*
+		contents, _ := Asset("template/" + name + ".html")
+		if debug {
+			contents, _ = dassets.Asset("template/" + name + ".html")
+		}
+	*/
+	if debug {
+		templates = template.New("").Funcs(funcs)
+		loadTemplates(dassets.AssetNames(), dassets.Asset)
+	}
+	err := templates.ExecuteTemplate(w, "template/"+name, templateData)
+	if err != nil {
+		log.Printf("error in template %v", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
-func Help(w http.ResponseWriter, request *http.Request) {
-	Template("help", nil, w, request)
+
+func ExecTemplate(w http.ResponseWriter, request *http.Request) {
+	vars := mux.Vars(request)
+	name := vars["name"]
+	Template(name, nil, w, request)
 }
-func Jobs(w http.ResponseWriter, request *http.Request) {
-	Template("jobs", nil, w, request)
+
+// Return the information about a job as JSON
+func JobDetail(w http.ResponseWriter, request *http.Request) {
+	key := mux.Vars(request)["id"]
+	job := jobs[key]
+	if job == nil {
+		http.Error(w, "could not find job", http.StatusNotFound)
+		return
+	}
+	var data = map[string]interface{}{"job": job}
+	Template("job.html", data, w, request)
 }
-func Submit(w http.ResponseWriter, request *http.Request) {
-	Template("submit", nil, w, request)
-}
-func Services(w http.ResponseWriter, request *http.Request) {
-	Template("services", nil, w, request)
+
+// Return the information about a job as JSON
+func ServiceDetail(w http.ResponseWriter, request *http.Request) {
+	key := mux.Vars(request)["id"]
+	service, ok := config.ServiceMap[key]
+	if !ok {
+		http.Error(w, fmt.Sprintf("could not find service %v", key), http.StatusNotFound)
+		return
+	}
+	var data = map[string]interface{}{"service": service}
+	Template("service.html", data, w, request)
 }
