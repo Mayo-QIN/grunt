@@ -9,11 +9,12 @@
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
   </head>
   <body>
+    {{ template "template/header.html" . }}
 
     <div class="container">
       <h1>Jobs</h1>
 
-      Currently {{len .jobs}} running jobs
+      Currently {{len .jobs}} jobs as of {{ now }}
       <hr/>
       <table class="table table-striped">
         <thead>
@@ -29,10 +30,10 @@
           {{range .jobs}}
           <tr>
             <td><a href="/job/{{.UUID}}">{{.UUID}}</a></td>
-            <td>{{.CommandLine}}</td>
-            <td>{{.StartTime}}</td>
+            <td> {{ range .ParsedCommandLine}} {{.}} {{end}} </td>
+            <td>{{humanizeTime .StartTime}}</td>
             <td>{{.Status}}</td>
-            <td>{{.EndTime}}</td>
+            <td>{{humanizeTime .EndTime}}</td>
           </tr>
 
           {{end}}

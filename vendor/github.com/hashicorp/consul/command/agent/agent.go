@@ -2,6 +2,7 @@ package agent
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,6 +13,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,8 +21,14 @@ import (
 	"github.com/hashicorp/consul/consul/state"
 	"github.com/hashicorp/consul/consul/structs"
 	"github.com/hashicorp/consul/lib"
+	"github.com/hashicorp/consul/logger"
+	"github.com/hashicorp/consul/types"
+	"github.com/hashicorp/go-sockaddr/template"
+	"github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/raft"
 	"github.com/hashicorp/serf/coordinate"
 	"github.com/hashicorp/serf/serf"
+	"github.com/shirou/gopsutil/host"
 )
 
 const (
@@ -30,10 +38,6 @@ const (
 	// Path to save local agent checks
 	checksDir     = "checks"
 	checkStateDir = "checks/state"
-
-	// The ID of the faux health checks for maintenance mode
-	serviceMaintCheckPrefix = "_service_maintenance"
-	nodeMaintCheckID        = "_node_maintenance"
 
 	// Default reasons for node/service maintenance mode
 	defaultNodeMaintReason = "Maintenance mode is enabled for this node, " +
@@ -64,29 +68,39 @@ type Agent struct {
 	// Output sink for logs
 	logOutput io.Writer
 
+	// Used for streaming logs to
+	logWriter *logger.LogWriter
+
 	// We have one of a client or a server, depending
 	// on our configuration
 	server *consul.Server
 	client *consul.Client
 
+	// acls is an object that helps manage local ACL enforcement.
+	acls *aclManager
+
 	// state stores a local representation of the node,
 	// services and checks. Used for anti-entropy.
 	state localState
 
+	// checkReapAfter maps the check ID to a timeout after which we should
+	// reap its associated service
+	checkReapAfter map[types.CheckID]time.Duration
+
 	// checkMonitors maps the check ID to an associated monitor
-	checkMonitors map[string]*CheckMonitor
+	checkMonitors map[types.CheckID]*CheckMonitor
 
 	// checkHTTPs maps the check ID to an associated HTTP check
-	checkHTTPs map[string]*CheckHTTP
+	checkHTTPs map[types.CheckID]*CheckHTTP
 
 	// checkTCPs maps the check ID to an associated TCP check
-	checkTCPs map[string]*CheckTCP
+	checkTCPs map[types.CheckID]*CheckTCP
 
 	// checkTTLs maps the check ID to an associated check TTL
-	checkTTLs map[string]*CheckTTL
+	checkTTLs map[types.CheckID]*CheckTTL
 
 	// checkDockers maps the check ID to an associated Docker Exec based check
-	checkDockers map[string]*CheckDocker
+	checkDockers map[types.CheckID]*CheckDocker
 
 	// checkLock protects updates to the check* maps
 	checkLock sync.Mutex
@@ -103,6 +117,8 @@ type Agent struct {
 	eventLock   sync.RWMutex
 	eventNotify state.NotifyGroup
 
+	reloadCh chan chan error
+
 	shutdown     bool
 	shutdownCh   chan struct{}
 	shutdownLock sync.Mutex
@@ -111,19 +127,12 @@ type Agent struct {
 	// agent methods use this, so use with care and never override
 	// outside of a unit test.
 	endpoints map[string]string
-
-	// reapLock is used to prevent child process reaping from interfering
-	// with normal waiting for subprocesses to complete. Any time you exec
-	// and wait, you should take a read lock on this mutex. Only the reaper
-	// takes the write lock. This setup prevents us from serializing all the
-	// child process management with each other, it just serializes them
-	// with the child process reaper.
-	reapLock sync.RWMutex
 }
 
 // Create is used to create a new Agent. Returns
 // the agent or potentially an error.
-func Create(config *Config, logOutput io.Writer) (*Agent, error) {
+func Create(config *Config, logOutput io.Writer, logWriter *logger.LogWriter,
+	reloadCh chan chan error) (*Agent, error) {
 	// Ensure we have a log sink
 	if logOutput == nil {
 		logOutput = os.Stderr
@@ -139,6 +148,12 @@ func Create(config *Config, logOutput io.Writer) (*Agent, error) {
 
 	// Try to get an advertise address
 	if config.AdvertiseAddr != "" {
+		ipStr, err := parseSingleIPTemplate(config.AdvertiseAddr)
+		if err != nil {
+			return nil, fmt.Errorf("Advertise address resolution failed: %v", err)
+		}
+		config.AdvertiseAddr = ipStr
+
 		if ip := net.ParseIP(config.AdvertiseAddr); ip == nil {
 			return nil, fmt.Errorf("Failed to parse advertise address: %v", config.AdvertiseAddr)
 		}
@@ -160,6 +175,12 @@ func Create(config *Config, logOutput io.Writer) (*Agent, error) {
 
 	// Try to get an advertise address for the wan
 	if config.AdvertiseAddrWan != "" {
+		ipStr, err := parseSingleIPTemplate(config.AdvertiseAddrWan)
+		if err != nil {
+			return nil, fmt.Errorf("Advertise WAN address resolution failed: %v", err)
+		}
+		config.AdvertiseAddrWan = ipStr
+
 		if ip := net.ParseIP(config.AdvertiseAddrWan); ip == nil {
 			return nil, fmt.Errorf("Failed to parse advertise address for wan: %v", config.AdvertiseAddrWan)
 		}
@@ -169,29 +190,48 @@ func Create(config *Config, logOutput io.Writer) (*Agent, error) {
 
 	// Create the default set of tagged addresses.
 	config.TaggedAddresses = map[string]string{
+		"lan": config.AdvertiseAddr,
 		"wan": config.AdvertiseAddrWan,
 	}
 
 	agent := &Agent{
-		config:        config,
-		logger:        log.New(logOutput, "", log.LstdFlags),
-		logOutput:     logOutput,
-		checkMonitors: make(map[string]*CheckMonitor),
-		checkTTLs:     make(map[string]*CheckTTL),
-		checkHTTPs:    make(map[string]*CheckHTTP),
-		checkTCPs:     make(map[string]*CheckTCP),
-		checkDockers:  make(map[string]*CheckDocker),
-		eventCh:       make(chan serf.UserEvent, 1024),
-		eventBuf:      make([]*UserEvent, 256),
-		shutdownCh:    make(chan struct{}),
-		endpoints:     make(map[string]string),
+		config:         config,
+		logger:         log.New(logOutput, "", log.LstdFlags),
+		logOutput:      logOutput,
+		logWriter:      logWriter,
+		checkReapAfter: make(map[types.CheckID]time.Duration),
+		checkMonitors:  make(map[types.CheckID]*CheckMonitor),
+		checkTTLs:      make(map[types.CheckID]*CheckTTL),
+		checkHTTPs:     make(map[types.CheckID]*CheckHTTP),
+		checkTCPs:      make(map[types.CheckID]*CheckTCP),
+		checkDockers:   make(map[types.CheckID]*CheckDocker),
+		eventCh:        make(chan serf.UserEvent, 1024),
+		eventBuf:       make([]*UserEvent, 256),
+		reloadCh:       reloadCh,
+		shutdownCh:     make(chan struct{}),
+		endpoints:      make(map[string]string),
+	}
+	if err := agent.resolveTmplAddrs(); err != nil {
+		return nil, err
 	}
 
-	// Initialize the local state
+	// Initialize the ACL manager.
+	acls, err := newACLManager(config)
+	if err != nil {
+		return nil, err
+	}
+	agent.acls = acls
+
+	// Retrieve or generate the node ID before setting up the rest of the
+	// agent, which depends on it.
+	if err := agent.setupNodeID(config); err != nil {
+		return nil, fmt.Errorf("Failed to setup node ID: %v", err)
+	}
+
+	// Initialize the local state.
 	agent.state.Init(config, agent.logger)
 
-	// Setup either the client or the server
-	var err error
+	// Setup either the client or the server.
 	if config.Server {
 		err = agent.setupServer()
 		agent.state.SetIface(agent.server)
@@ -203,7 +243,8 @@ func Create(config *Config, logOutput io.Writer) (*Agent, error) {
 			Port:    agent.config.Ports.Server,
 			Tags:    []string{},
 		}
-		agent.state.AddService(&consulService, "")
+
+		agent.state.AddService(&consulService, agent.config.GetTokenForAgent())
 	} else {
 		err = agent.setupClient()
 		agent.state.SetIface(agent.client)
@@ -212,15 +253,22 @@ func Create(config *Config, logOutput io.Writer) (*Agent, error) {
 		return nil, err
 	}
 
-	// Load checks/services
+	// Load checks/services/metadata.
 	if err := agent.loadServices(config); err != nil {
 		return nil, err
 	}
 	if err := agent.loadChecks(config); err != nil {
 		return nil, err
 	}
+	if err := agent.loadMetadata(config); err != nil {
+		return nil, err
+	}
 
-	// Start handling events
+	// Start watching for critical services to deregister, based on their
+	// checks.
+	go agent.reapServices()
+
+	// Start handling events.
 	go agent.handleEvents()
 
 	// Start sending network coordinate to the server.
@@ -228,7 +276,7 @@ func Create(config *Config, logOutput io.Writer) (*Agent, error) {
 		go agent.sendCoordinate()
 	}
 
-	// Write out the PID file if necessary
+	// Write out the PID file if necessary.
 	err = agent.storePid()
 	if err != nil {
 		return nil, err
@@ -247,8 +295,16 @@ func (a *Agent) consulConfig() *consul.Config {
 		base = consul.DefaultConfig()
 	}
 
+	// This is set when the agent starts up
+	base.NodeID = a.config.NodeID
+
 	// Apply dev mode
 	base.DevMode = a.config.DevMode
+
+	// Apply performance factors
+	if a.config.Performance.RaftMultiplier > 0 {
+		base.ScaleRaft(a.config.Performance.RaftMultiplier)
+	}
 
 	// Override with our config
 	if a.config.Datacenter != "" {
@@ -259,10 +315,6 @@ func (a *Agent) consulConfig() *consul.Config {
 	}
 	if a.config.NodeName != "" {
 		base.NodeName = a.config.NodeName
-	}
-	if a.config.BindAddr != "" {
-		base.SerfLANConfig.MemberlistConfig.BindAddr = a.config.BindAddr
-		base.SerfWANConfig.MemberlistConfig.BindAddr = a.config.BindAddr
 	}
 	if a.config.Ports.SerfLan != 0 {
 		base.SerfLANConfig.MemberlistConfig.BindPort = a.config.Ports.SerfLan
@@ -278,6 +330,17 @@ func (a *Agent) consulConfig() *consul.Config {
 			Port: a.config.Ports.Server,
 		}
 		base.RPCAddr = bindAddr
+
+		// Set the Serf configs using the old default behavior, we may
+		// override these in the code right below.
+		base.SerfLANConfig.MemberlistConfig.BindAddr = a.config.BindAddr
+		base.SerfWANConfig.MemberlistConfig.BindAddr = a.config.BindAddr
+	}
+	if a.config.SerfLanBindAddr != "" {
+		base.SerfLANConfig.MemberlistConfig.BindAddr = a.config.SerfLanBindAddr
+	}
+	if a.config.SerfWanBindAddr != "" {
+		base.SerfWANConfig.MemberlistConfig.BindAddr = a.config.SerfWanBindAddr
 	}
 	if a.config.AdvertiseAddr != "" {
 		base.SerfLANConfig.MemberlistConfig.AdvertiseAddr = a.config.AdvertiseAddr
@@ -299,6 +362,12 @@ func (a *Agent) consulConfig() *consul.Config {
 		base.SerfWANConfig.MemberlistConfig.AdvertiseAddr = a.config.AdvertiseAddrs.SerfWan.IP.String()
 		base.SerfWANConfig.MemberlistConfig.AdvertisePort = a.config.AdvertiseAddrs.SerfWan.Port
 	}
+	if a.config.ReconnectTimeoutLan != 0 {
+		base.SerfLANConfig.ReconnectTimeout = a.config.ReconnectTimeoutLan
+	}
+	if a.config.ReconnectTimeoutWan != 0 {
+		base.SerfWANConfig.ReconnectTimeout = a.config.ReconnectTimeoutWan
+	}
 	if a.config.AdvertiseAddrs.RPC != nil {
 		base.RPCAdvertise = a.config.AdvertiseAddrs.RPC
 	}
@@ -314,8 +383,14 @@ func (a *Agent) consulConfig() *consul.Config {
 	if a.config.Protocol > 0 {
 		base.ProtocolVersion = uint8(a.config.Protocol)
 	}
+	if a.config.RaftProtocol != 0 {
+		base.RaftConfig.ProtocolVersion = raft.ProtocolVersion(a.config.RaftProtocol)
+	}
 	if a.config.ACLToken != "" {
 		base.ACLToken = a.config.ACLToken
+	}
+	if a.config.ACLAgentToken != "" {
+		base.ACLAgentToken = a.config.ACLAgentToken
 	}
 	if a.config.ACLMasterToken != "" {
 		base.ACLMasterToken = a.config.ACLMasterToken
@@ -332,8 +407,17 @@ func (a *Agent) consulConfig() *consul.Config {
 	if a.config.ACLDownPolicy != "" {
 		base.ACLDownPolicy = a.config.ACLDownPolicy
 	}
+	if a.config.ACLReplicationToken != "" {
+		base.ACLReplicationToken = a.config.ACLReplicationToken
+	}
+	if a.config.ACLEnforceVersion8 != nil {
+		base.ACLEnforceVersion8 = *a.config.ACLEnforceVersion8
+	}
 	if a.config.SessionTTLMinRaw != "" {
 		base.SessionTTLMin = a.config.SessionTTLMin
+	}
+	if a.config.Autopilot.CleanupDeadServers != nil {
+		base.AutopilotConfig.CleanupDeadServers = *a.config.Autopilot.CleanupDeadServers
 	}
 
 	// Format the build string
@@ -353,6 +437,7 @@ func (a *Agent) consulConfig() *consul.Config {
 	base.KeyFile = a.config.KeyFile
 	base.ServerName = a.config.ServerName
 	base.Domain = a.config.Domain
+	base.TLSMinVersion = a.config.TLSMinVersion
 
 	// Setup the ServerUp callback
 	base.ServerUp = a.state.ConsulServerUp
@@ -368,6 +453,113 @@ func (a *Agent) consulConfig() *consul.Config {
 	// Setup the loggers
 	base.LogOutput = a.logOutput
 	return base
+}
+
+// parseSingleIPTemplate is used as a helper function to parse out a single IP
+// address from a config parameter.
+func parseSingleIPTemplate(ipTmpl string) (string, error) {
+	out, err := template.Parse(ipTmpl)
+	if err != nil {
+		return "", fmt.Errorf("Unable to parse address template %q: %v", ipTmpl, err)
+	}
+
+	ips := strings.Split(out, " ")
+	switch len(ips) {
+	case 0:
+		return "", errors.New("No addresses found, please configure one.")
+	case 1:
+		return ips[0], nil
+	default:
+		return "", fmt.Errorf("Multiple addresses found (%q), please configure one.", out)
+	}
+}
+
+// resolveTmplAddrs iterates over the myriad of addresses in the agent's config
+// and performs go-sockaddr/template Parse on each known address in case the
+// user specified a template config for any of their values.
+func (a *Agent) resolveTmplAddrs() error {
+	if a.config.AdvertiseAddr != "" {
+		ipStr, err := parseSingleIPTemplate(a.config.AdvertiseAddr)
+		if err != nil {
+			return fmt.Errorf("Advertise address resolution failed: %v", err)
+		}
+		a.config.AdvertiseAddr = ipStr
+	}
+
+	if a.config.Addresses.DNS != "" {
+		ipStr, err := parseSingleIPTemplate(a.config.Addresses.DNS)
+		if err != nil {
+			return fmt.Errorf("DNS address resolution failed: %v", err)
+		}
+		a.config.Addresses.DNS = ipStr
+	}
+
+	if a.config.Addresses.HTTP != "" {
+		ipStr, err := parseSingleIPTemplate(a.config.Addresses.HTTP)
+		if err != nil {
+			return fmt.Errorf("HTTP address resolution failed: %v", err)
+		}
+		a.config.Addresses.HTTP = ipStr
+	}
+
+	if a.config.Addresses.HTTPS != "" {
+		ipStr, err := parseSingleIPTemplate(a.config.Addresses.HTTPS)
+		if err != nil {
+			return fmt.Errorf("HTTPS address resolution failed: %v", err)
+		}
+		a.config.Addresses.HTTPS = ipStr
+	}
+
+	if a.config.AdvertiseAddrWan != "" {
+		ipStr, err := parseSingleIPTemplate(a.config.AdvertiseAddrWan)
+		if err != nil {
+			return fmt.Errorf("Advertise WAN address resolution failed: %v", err)
+		}
+		a.config.AdvertiseAddrWan = ipStr
+	}
+
+	if a.config.BindAddr != "" {
+		ipStr, err := parseSingleIPTemplate(a.config.BindAddr)
+		if err != nil {
+			return fmt.Errorf("Bind address resolution failed: %v", err)
+		}
+		a.config.BindAddr = ipStr
+	}
+
+	if a.config.ClientAddr != "" {
+		ipStr, err := parseSingleIPTemplate(a.config.ClientAddr)
+		if err != nil {
+			return fmt.Errorf("Client address resolution failed: %v", err)
+		}
+		a.config.ClientAddr = ipStr
+	}
+
+	if a.config.SerfLanBindAddr != "" {
+		ipStr, err := parseSingleIPTemplate(a.config.SerfLanBindAddr)
+		if err != nil {
+			return fmt.Errorf("Serf LAN Address resolution failed: %v", err)
+		}
+		a.config.SerfLanBindAddr = ipStr
+	}
+
+	if a.config.SerfWanBindAddr != "" {
+		ipStr, err := parseSingleIPTemplate(a.config.SerfWanBindAddr)
+		if err != nil {
+			return fmt.Errorf("Serf WAN Address resolution failed: %v", err)
+		}
+		a.config.SerfWanBindAddr = ipStr
+	}
+
+	// Parse all tagged addresses
+	for k, v := range a.config.TaggedAddresses {
+		ipStr, err := parseSingleIPTemplate(v)
+		if err != nil {
+			return fmt.Errorf("%s address resolution failed: %v", k, err)
+		}
+		a.config.TaggedAddresses[k] = ipStr
+	}
+
+	return nil
 }
 
 // setupServer is used to initialize the Consul server
@@ -399,6 +591,102 @@ func (a *Agent) setupClient() error {
 		return fmt.Errorf("Failed to start Consul client: %v", err)
 	}
 	a.client = client
+	return nil
+}
+
+// makeRandomID will generate a random UUID for a node.
+func (a *Agent) makeRandomID() (string, error) {
+	id, err := uuid.GenerateUUID()
+	if err != nil {
+		return "", err
+	}
+
+	a.logger.Printf("[DEBUG] Using random ID %q as node ID", id)
+	return id, nil
+}
+
+// makeNodeID will try to find a host-specific ID, or else will generate a
+// random ID. The returned ID will always be formatted as a GUID. We don't tell
+// the caller whether this ID is random or stable since the consequences are
+// high for us if this changes, so we will persist it either way. This will let
+// gopsutil change implementations without affecting in-place upgrades of nodes.
+func (a *Agent) makeNodeID() (string, error) {
+	// Try to get a stable ID associated with the host itself.
+	info, err := host.Info()
+	if err != nil {
+		a.logger.Printf("[DEBUG] Couldn't get a unique ID from the host: %v", err)
+		return a.makeRandomID()
+	}
+
+	// Make sure the host ID parses as a UUID, since we don't have complete
+	// control over this process.
+	id := strings.ToLower(info.HostID)
+	if _, err := uuid.ParseUUID(id); err != nil {
+		a.logger.Printf("[DEBUG] Unique ID %q from host isn't formatted as a UUID: %v",
+			id, err)
+		return a.makeRandomID()
+	}
+
+	a.logger.Printf("[DEBUG] Using unique ID %q from host as node ID", id)
+	return id, nil
+}
+
+// setupNodeID will pull the persisted node ID, if any, or create a random one
+// and persist it.
+func (a *Agent) setupNodeID(config *Config) error {
+	// If they've configured a node ID manually then just use that, as
+	// long as it's valid.
+	if config.NodeID != "" {
+		if _, err := uuid.ParseUUID(string(config.NodeID)); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	// For dev mode we have no filesystem access so just make one.
+	if a.config.DevMode {
+		id, err := a.makeNodeID()
+		if err != nil {
+			return err
+		}
+
+		config.NodeID = types.NodeID(id)
+		return nil
+	}
+
+	// Load saved state, if any. Since a user could edit this, we also
+	// validate it.
+	fileID := filepath.Join(config.DataDir, "node-id")
+	if _, err := os.Stat(fileID); err == nil {
+		rawID, err := ioutil.ReadFile(fileID)
+		if err != nil {
+			return err
+		}
+
+		nodeID := strings.TrimSpace(string(rawID))
+		if _, err := uuid.ParseUUID(nodeID); err != nil {
+			return err
+		}
+
+		config.NodeID = types.NodeID(nodeID)
+	}
+
+	// If we still don't have a valid node ID, make one.
+	if config.NodeID == "" {
+		id, err := a.makeNodeID()
+		if err != nil {
+			return err
+		}
+		if err := lib.EnsurePath(fileID, false); err != nil {
+			return err
+		}
+		if err := ioutil.WriteFile(fileID, []byte(id), 0600); err != nil {
+			return err
+		}
+
+		config.NodeID = types.NodeID(id)
+	}
 	return nil
 }
 
@@ -450,6 +738,19 @@ func (a *Agent) RPC(method string, args interface{}, reply interface{}) error {
 		return a.server.RPC(method, args, reply)
 	}
 	return a.client.RPC(method, args, reply)
+}
+
+// SnapshotRPC performs the requested snapshot RPC against the Consul server in
+// a streaming manner. The contents of in will be read and passed along as the
+// payload, and the response message will determine the error status, and any
+// return payload will be written to out.
+func (a *Agent) SnapshotRPC(args *structs.SnapshotRequest, in io.Reader, out io.Writer,
+	replyFn consul.SnapshotReplyFn) error {
+
+	if a.server != nil {
+		return a.server.SnapshotRPC(args, in, out, replyFn)
+	}
+	return a.client.SnapshotRPC(args, in, out, replyFn)
 }
 
 // Leave is used to prepare the agent for a graceful shutdown
@@ -634,14 +935,11 @@ func (a *Agent) sendCoordinate() {
 				continue
 			}
 
-			// TODO - Consider adding a distance check so we don't send
-			// an update if the position hasn't changed by more than a
-			// threshold.
 			req := structs.CoordinateUpdateRequest{
 				Datacenter:   a.config.Datacenter,
 				Node:         a.config.NodeName,
 				Coord:        c,
-				WriteRequest: structs.WriteRequest{Token: a.config.ACLToken},
+				WriteRequest: structs.WriteRequest{Token: a.config.GetTokenForAgent()},
 			}
 			var reply struct{}
 			if err := a.RPC("Coordinate.Update", &req, &reply); err != nil {
@@ -654,29 +952,67 @@ func (a *Agent) sendCoordinate() {
 	}
 }
 
+// reapServicesInternal does a single pass, looking for services to reap.
+func (a *Agent) reapServicesInternal() {
+	reaped := make(map[string]struct{})
+	for checkID, check := range a.state.CriticalChecks() {
+		// There's nothing to do if there's no service.
+		if check.Check.ServiceID == "" {
+			continue
+		}
+
+		// There might be multiple checks for one service, so
+		// we don't need to reap multiple times.
+		serviceID := check.Check.ServiceID
+		if _, ok := reaped[serviceID]; ok {
+			continue
+		}
+
+		// See if there's a timeout.
+		a.checkLock.Lock()
+		timeout, ok := a.checkReapAfter[checkID]
+		a.checkLock.Unlock()
+
+		// Reap, if necessary. We keep track of which service
+		// this is so that we won't try to remove it again.
+		if ok && check.CriticalFor > timeout {
+			reaped[serviceID] = struct{}{}
+			a.RemoveService(serviceID, true)
+			a.logger.Printf("[INFO] agent: Check %q for service %q has been critical for too long; deregistered service",
+				checkID, serviceID)
+		}
+	}
+}
+
+// reapServices is a long running goroutine that looks for checks that have been
+// critical too long and dregisters their associated services.
+func (a *Agent) reapServices() {
+	for {
+		select {
+		case <-time.After(a.config.CheckReapInterval):
+			a.reapServicesInternal()
+
+		case <-a.shutdownCh:
+			return
+		}
+	}
+
+}
+
 // persistService saves a service definition to a JSON file in the data dir
 func (a *Agent) persistService(service *structs.NodeService) error {
 	svcPath := filepath.Join(a.config.DataDir, servicesDir, stringHash(service.ID))
+
 	wrapped := persistedService{
 		Token:   a.state.ServiceToken(service.ID),
 		Service: service,
 	}
 	encoded, err := json.Marshal(wrapped)
 	if err != nil {
-		return nil
-	}
-	if err := os.MkdirAll(filepath.Dir(svcPath), 0700); err != nil {
 		return err
 	}
-	fh, err := os.OpenFile(svcPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
-	if err != nil {
-		return err
-	}
-	defer fh.Close()
-	if _, err := fh.Write(encoded); err != nil {
-		return err
-	}
-	return nil
+
+	return writeFileAtomic(svcPath, encoded)
 }
 
 // purgeService removes a persisted service definition file from the data dir
@@ -690,7 +1026,7 @@ func (a *Agent) purgeService(serviceID string) error {
 
 // persistCheck saves a check definition to the local agent's state directory
 func (a *Agent) persistCheck(check *structs.HealthCheck, chkType *CheckType) error {
-	checkPath := filepath.Join(a.config.DataDir, checksDir, stringHash(check.CheckID))
+	checkPath := filepath.Join(a.config.DataDir, checksDir, checkIDHash(check.CheckID))
 
 	// Create the persisted check
 	wrapped := persistedCheck{
@@ -701,29 +1037,47 @@ func (a *Agent) persistCheck(check *structs.HealthCheck, chkType *CheckType) err
 
 	encoded, err := json.Marshal(wrapped)
 	if err != nil {
-		return nil
-	}
-	if err := os.MkdirAll(filepath.Dir(checkPath), 0700); err != nil {
 		return err
 	}
-	fh, err := os.OpenFile(checkPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
-	if err != nil {
-		return err
-	}
-	defer fh.Close()
-	if _, err := fh.Write(encoded); err != nil {
-		return err
-	}
-	return nil
+
+	return writeFileAtomic(checkPath, encoded)
 }
 
 // purgeCheck removes a persisted check definition file from the data dir
-func (a *Agent) purgeCheck(checkID string) error {
-	checkPath := filepath.Join(a.config.DataDir, checksDir, stringHash(checkID))
+func (a *Agent) purgeCheck(checkID types.CheckID) error {
+	checkPath := filepath.Join(a.config.DataDir, checksDir, checkIDHash(checkID))
 	if _, err := os.Stat(checkPath); err == nil {
 		return os.Remove(checkPath)
 	}
 	return nil
+}
+
+// writeFileAtomic writes the given contents to a temporary file in the same
+// directory, does an fsync and then renames the file to its real path
+func writeFileAtomic(path string, contents []byte) error {
+	uuid, err := uuid.GenerateUUID()
+	if err != nil {
+		return err
+	}
+	tempPath := fmt.Sprintf("%s-%s.tmp", path, uuid)
+
+	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+		return err
+	}
+	fh, err := os.OpenFile(tempPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	if _, err := fh.Write(contents); err != nil {
+		return err
+	}
+	if err := fh.Sync(); err != nil {
+		return err
+	}
+	if err := fh.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tempPath, path)
 }
 
 // AddService is used to add a service entry.
@@ -752,7 +1106,7 @@ func (a *Agent) AddService(service *structs.NodeService, chkTypes CheckTypes, pe
 	// Warn if any tags are incompatible with DNS
 	for _, tag := range service.Tags {
 		if !dnsNameRe.MatchString(tag) {
-			a.logger.Printf("[WARN] Service tag %q will not be discoverable "+
+			a.logger.Printf("[DEBUG] Service tag %q will not be discoverable "+
 				"via DNS due to invalid characters. Valid characters include "+
 				"all alpha-numerics and dashes.", tag)
 		}
@@ -785,7 +1139,7 @@ func (a *Agent) AddService(service *structs.NodeService, chkTypes CheckTypes, pe
 		}
 		check := &structs.HealthCheck{
 			Node:        a.config.NodeName,
-			CheckID:     checkID,
+			CheckID:     types.CheckID(checkID),
 			Name:        fmt.Sprintf("Service '%s' check", service.Service),
 			Status:      structs.HealthCritical,
 			Notes:       chkType.Notes,
@@ -818,7 +1172,14 @@ func (a *Agent) RemoveService(serviceID string, persist bool) error {
 	}
 
 	// Remove service immediately
-	a.state.RemoveService(serviceID)
+	err := a.state.RemoveService(serviceID)
+
+	// TODO: Return the error instead of just logging here in Consul 0.8
+	// For now, keep the current idempotent behavior on deleting a nonexistent service
+	if err != nil {
+		a.logger.Printf("[WARN] agent: Failed to deregister service %q: %s", serviceID, err)
+		return nil
+	}
 
 	// Remove the service from the data dir
 	if persist {
@@ -898,12 +1259,13 @@ func (a *Agent) AddCheck(check *structs.HealthCheck, chkType *CheckType, persist
 			}
 
 			http := &CheckHTTP{
-				Notify:   &a.state,
-				CheckID:  check.CheckID,
-				HTTP:     chkType.HTTP,
-				Interval: chkType.Interval,
-				Timeout:  chkType.Timeout,
-				Logger:   a.logger,
+				Notify:        &a.state,
+				CheckID:       check.CheckID,
+				HTTP:          chkType.HTTP,
+				Interval:      chkType.Interval,
+				Timeout:       chkType.Timeout,
+				Logger:        a.logger,
+				TLSSkipVerify: chkType.TLSSkipVerify,
 			}
 			http.Start()
 			a.checkHTTPs[check.CheckID] = http
@@ -968,13 +1330,25 @@ func (a *Agent) AddCheck(check *structs.HealthCheck, chkType *CheckType, persist
 				CheckID:  check.CheckID,
 				Script:   chkType.Script,
 				Interval: chkType.Interval,
+				Timeout:  chkType.Timeout,
 				Logger:   a.logger,
-				ReapLock: &a.reapLock,
 			}
 			monitor.Start()
 			a.checkMonitors[check.CheckID] = monitor
 		} else {
 			return fmt.Errorf("Check type is not valid")
+		}
+
+		if chkType.DeregisterCriticalServiceAfter > 0 {
+			timeout := chkType.DeregisterCriticalServiceAfter
+			if timeout < a.config.CheckDeregisterIntervalMin {
+				timeout = a.config.CheckDeregisterIntervalMin
+				a.logger.Println(fmt.Sprintf("[WARN] agent: check '%s' has deregister interval below minimum of %v",
+					check.CheckID, a.config.CheckDeregisterIntervalMin))
+			}
+			a.checkReapAfter[check.CheckID] = timeout
+		} else {
+			delete(a.checkReapAfter, check.CheckID)
 		}
 	}
 
@@ -991,7 +1365,7 @@ func (a *Agent) AddCheck(check *structs.HealthCheck, chkType *CheckType, persist
 
 // RemoveCheck is used to remove a health check.
 // The agent will make a best effort to ensure it is deregistered
-func (a *Agent) RemoveCheck(checkID string, persist bool) error {
+func (a *Agent) RemoveCheck(checkID types.CheckID, persist bool) error {
 	// Validate CheckID
 	if checkID == "" {
 		return fmt.Errorf("CheckID missing")
@@ -1004,6 +1378,7 @@ func (a *Agent) RemoveCheck(checkID string, persist bool) error {
 	defer a.checkLock.Unlock()
 
 	// Stop any monitors
+	delete(a.checkReapAfter, checkID)
 	if check, ok := a.checkMonitors[checkID]; ok {
 		check.Stop()
 		delete(a.checkMonitors, checkID)
@@ -1032,25 +1407,27 @@ func (a *Agent) RemoveCheck(checkID string, persist bool) error {
 	return nil
 }
 
-// UpdateCheck is used to update the status of a check.
-// This can only be used with checks of the TTL type.
-func (a *Agent) UpdateCheck(checkID, status, output string) error {
+// updateTTLCheck is used to update the status of a TTL check via the Agent API.
+func (a *Agent) updateTTLCheck(checkID types.CheckID, status, output string) error {
 	a.checkLock.Lock()
 	defer a.checkLock.Unlock()
 
+	// Grab the TTL check.
 	check, ok := a.checkTTLs[checkID]
 	if !ok {
-		return fmt.Errorf("CheckID does not have associated TTL")
+		return fmt.Errorf("CheckID %q does not have associated TTL", checkID)
 	}
 
-	// Set the status through CheckTTL to reset the TTL
+	// Set the status through CheckTTL to reset the TTL.
 	check.SetStatus(status, output)
 
+	// We don't write any files in dev mode so bail here.
 	if a.config.DevMode {
 		return nil
 	}
 
-	// Always persist the state for TTL checks
+	// Persist the state so the TTL check can come up in a good state after
+	// an agent restart, especially with long TTL values.
 	if err := a.persistCheckState(check, status, output); err != nil {
 		return fmt.Errorf("failed persisting state for check %q: %s", checkID, err)
 	}
@@ -1083,9 +1460,17 @@ func (a *Agent) persistCheckState(check *CheckTTL, status, output string) error 
 	}
 
 	// Write the state to the file
-	file := filepath.Join(dir, stringHash(check.CheckID))
-	if err := ioutil.WriteFile(file, buf, 0600); err != nil {
-		return fmt.Errorf("failed writing file %q: %s", file, err)
+	file := filepath.Join(dir, checkIDHash(check.CheckID))
+
+	// Create temp file in same dir, to make more likely atomic
+	tempFile := file + ".tmp"
+
+	// persistCheckState is called frequently, so don't use writeFileAtomic to avoid calling fsync here
+	if err := ioutil.WriteFile(tempFile, buf, 0600); err != nil {
+		return fmt.Errorf("failed writing temp file %q: %s", tempFile, err)
+	}
+	if err := os.Rename(tempFile, file); err != nil {
+		return fmt.Errorf("failed to rename temp file from %q to %q: %s", tempFile, file, err)
 	}
 
 	return nil
@@ -1094,7 +1479,7 @@ func (a *Agent) persistCheckState(check *CheckTTL, status, output string) error 
 // loadCheckState is used to restore the persisted state of a check.
 func (a *Agent) loadCheckState(check *structs.HealthCheck) error {
 	// Try to read the persisted state for this check
-	file := filepath.Join(a.config.DataDir, checkStateDir, stringHash(check.CheckID))
+	file := filepath.Join(a.config.DataDir, checkStateDir, checkIDHash(check.CheckID))
 	buf, err := ioutil.ReadFile(file)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -1106,7 +1491,8 @@ func (a *Agent) loadCheckState(check *structs.HealthCheck) error {
 	// Decode the state data
 	var p persistedCheckState
 	if err := json.Unmarshal(buf, &p); err != nil {
-		return fmt.Errorf("failed decoding check state: %s", err)
+		a.logger.Printf("[ERROR] agent: failed decoding check state: %s", err)
+		return a.purgeCheckState(check.CheckID)
 	}
 
 	// Check if the state has expired
@@ -1122,8 +1508,8 @@ func (a *Agent) loadCheckState(check *structs.HealthCheck) error {
 }
 
 // purgeCheckState is used to purge the state of a check from the data dir
-func (a *Agent) purgeCheckState(checkID string) error {
-	file := filepath.Join(a.config.DataDir, checkStateDir, stringHash(checkID))
+func (a *Agent) purgeCheckState(checkID types.CheckID) error {
+	file := filepath.Join(a.config.DataDir, checkStateDir, checkIDHash(checkID))
 	err := os.Remove(file)
 	if os.IsNotExist(err) {
 		return nil
@@ -1386,22 +1772,55 @@ func (a *Agent) unloadChecks() error {
 // snapshotCheckState is used to snapshot the current state of the health
 // checks. This is done before we reload our checks, so that we can properly
 // restore into the same state.
-func (a *Agent) snapshotCheckState() map[string]*structs.HealthCheck {
+func (a *Agent) snapshotCheckState() map[types.CheckID]*structs.HealthCheck {
 	return a.state.Checks()
 }
 
 // restoreCheckState is used to reset the health state based on a snapshot.
 // This is done after we finish the reload to avoid any unnecessary flaps
 // in health state and potential session invalidations.
-func (a *Agent) restoreCheckState(snap map[string]*structs.HealthCheck) {
+func (a *Agent) restoreCheckState(snap map[types.CheckID]*structs.HealthCheck) {
 	for id, check := range snap {
 		a.state.UpdateCheck(id, check.Status, check.Output)
 	}
 }
 
+// loadMetadata loads node metadata fields from the agent config and
+// updates them on the local agent.
+func (a *Agent) loadMetadata(conf *Config) error {
+	a.state.Lock()
+	defer a.state.Unlock()
+
+	for key, value := range conf.Meta {
+		a.state.metadata[key] = value
+	}
+
+	a.state.changeMade()
+
+	return nil
+}
+
+// parseMetaPair parses a key/value pair of the form key:value
+func parseMetaPair(raw string) (string, string) {
+	pair := strings.SplitN(raw, ":", 2)
+	if len(pair) == 2 {
+		return pair[0], pair[1]
+	} else {
+		return pair[0], ""
+	}
+}
+
+// unloadMetadata resets the local metadata state
+func (a *Agent) unloadMetadata() {
+	a.state.Lock()
+	defer a.state.Unlock()
+
+	a.state.metadata = make(map[string]string)
+}
+
 // serviceMaintCheckID returns the ID of a given service's maintenance check
-func serviceMaintCheckID(serviceID string) string {
-	return fmt.Sprintf("%s:%s", serviceMaintCheckPrefix, serviceID)
+func serviceMaintCheckID(serviceID string) types.CheckID {
+	return types.CheckID(structs.ServiceMaintPrefix + serviceID)
 }
 
 // EnableServiceMaintenance will register a false health check against the given
@@ -1462,7 +1881,7 @@ func (a *Agent) DisableServiceMaintenance(serviceID string) error {
 // EnableNodeMaintenance places a node into maintenance mode.
 func (a *Agent) EnableNodeMaintenance(reason, token string) {
 	// Ensure node maintenance is not already enabled
-	if _, ok := a.state.Checks()[nodeMaintCheckID]; ok {
+	if _, ok := a.state.Checks()[structs.NodeMaint]; ok {
 		return
 	}
 
@@ -1474,7 +1893,7 @@ func (a *Agent) EnableNodeMaintenance(reason, token string) {
 	// Create and register the node maintenance check
 	check := &structs.HealthCheck{
 		Node:    a.config.NodeName,
-		CheckID: nodeMaintCheckID,
+		CheckID: structs.NodeMaint,
 		Name:    "Node Maintenance Mode",
 		Notes:   reason,
 		Status:  structs.HealthCritical,
@@ -1485,10 +1904,10 @@ func (a *Agent) EnableNodeMaintenance(reason, token string) {
 
 // DisableNodeMaintenance removes a node from maintenance mode
 func (a *Agent) DisableNodeMaintenance() {
-	if _, ok := a.state.Checks()[nodeMaintCheckID]; !ok {
+	if _, ok := a.state.Checks()[structs.NodeMaint]; !ok {
 		return
 	}
-	a.RemoveCheck(nodeMaintCheckID, true)
+	a.RemoveCheck(structs.NodeMaint, true)
 	a.logger.Printf("[INFO] agent: Node left maintenance mode")
 }
 

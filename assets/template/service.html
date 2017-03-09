@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>grunt {{.service.EndPoint}}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    {{ template "template/header.html" . }}
+
+    <div class="container">
+      <div class="row">
+        <h1>{{.service.EndPoint}}</h1>
+      </div>
+      {{ $c := .config }}
+        {{ with .service }}
+        <div class="row">
+          <div class="col-sm-4">endpoint</div>
+          <div class="col-sm-8">{{.EndPoint}}</div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm-4">command line</div>
+          <div class="col-sm-8">{{range .CommandLine}}{{.}} {{end}}</div>
+        </div>
+        
+        <div class="row">
+          <div class="col-sm-4">description</div>
+          <div class="col-sm-8">{{ .Description }}</div>
+        </div>
+
+        <div class="row">
+          <h3>Calling with curl</h3>
+          {{ $d := .Defaults }}
+          <div class="well">
+            curl -X POST {{ range $p := .Parameters}} --form {{ $p }}="{{index $d $p}}"{{end}}
+            {{ range $p := .InputFiles }} --form {{$p}}=@FILENAME {{end}}
+            {{ range $p := .OutputFiles }} --form {{$p}}=output.FILENAME {{end}}
+            {{ range $p := .InputZip }} --form {{$p}}=@FILENAME.zip {{end}}
+            {{ range $p := .OutputZip }} --form {{$p}}=output.zip {{end}}
+            {{ $c.Server }}/rest/service/{{.EndPoint}}
+        </div>
+      </div>
+      {{ end }}
+      
+    </div>
+  </body>
+</html>

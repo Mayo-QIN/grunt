@@ -8,34 +8,39 @@
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
   </head>
   <body>
-
+    {{ template "template/header.html" . }}
+    
     <div class="container">
       <h1>Services</h1>
 
-    Currently {{len .services}} services available
-    <hr/>
-    <table class="table table-striped">
-      <thead>
-      <tr>
-        <th>endpoint</th>
-        <th>command line</th>
-        <th>description</th>
-        <th>defaults</th>
-      </tr>
-      </thead>
+      Currently {{len .services}} services available
+      <hr/>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>endpoint</th>
+            <th>command line</th>
+            <th>description</th>
+            <th>defaults</th>
+          </tr>
+        </thead>
 
-      <tbody>
-      {{range .services}}
-      <tr>
-        <td>{{.EndPoint}}</td>
-        <td>{{.CommandLine}}</td>
-        <td>{{.Description}}</td>
-        <td>{{.Defaults}}</td>
-      </tr>
-      
-      {{end}}
-      </tbody>
-    </table>
+        <tbody>
+          {{range .services}}
+          <tr>
+            <td><a href="service/{{.EndPoint}}">{{.EndPoint}}</a></td>
+            <td>
+              {{ range $index, $element := .CommandLine}}
+              {{$element}}
+              {{end}}
+            </td>
+            <td>{{.Description}}</td>
+            <td>{{json .Defaults}}</td>
+          </tr>
+          
+          {{end}}
+        </tbody>
+      </table>
     </div>
   </body>
 </html>

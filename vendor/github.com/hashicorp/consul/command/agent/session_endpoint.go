@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/consul/consul"
 	"github.com/hashicorp/consul/consul/structs"
+	"github.com/hashicorp/consul/types"
 )
 
 const (
@@ -38,13 +39,14 @@ func (s *HTTPServer) SessionCreate(resp http.ResponseWriter, req *http.Request) 
 		Op: structs.SessionCreate,
 		Session: structs.Session{
 			Node:      s.agent.config.NodeName,
-			Checks:    []string{consul.SerfCheckID},
+			Checks:    []types.CheckID{consul.SerfCheckID},
 			LockDelay: 15 * time.Second,
 			Behavior:  structs.SessionKeysRelease,
 			TTL:       "",
 		},
 	}
 	s.parseDC(req, &args.Datacenter)
+	s.parseToken(req, &args.Token)
 
 	// Handle optional request body
 	if req.ContentLength > 0 {
@@ -116,6 +118,7 @@ func (s *HTTPServer) SessionDestroy(resp http.ResponseWriter, req *http.Request)
 		Op: structs.SessionDestroy,
 	}
 	s.parseDC(req, &args.Datacenter)
+	s.parseToken(req, &args.Token)
 
 	// Pull out the session id
 	args.Session.ID = strings.TrimPrefix(req.URL.Path, "/v1/session/destroy/")

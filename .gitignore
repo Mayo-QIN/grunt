@@ -11,3 +11,8 @@ docker/results.zip.zip
 docker/output/diab.csv
 grunt-tmp
 .GOPATH
+/.GOPATH
+/bin
+vendor/golang.org/x/tools/cmd/goimports
+vendor/golang.org/x/tools
+vendor/github.com/wadey

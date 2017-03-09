@@ -13,6 +13,7 @@ package testutil
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -22,21 +23,23 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
-	"sync/atomic"
 
+	"github.com/hashicorp/consul/consul/structs"
 	"github.com/hashicorp/go-cleanhttp"
 )
 
-// offset is used to atomically increment the port numbers.
-var offset uint64
+// TestPerformanceConfig configures the performance parameters.
+type TestPerformanceConfig struct {
+	RaftMultiplier uint `json:"raft_multiplier,omitempty"`
+}
 
 // TestPortConfig configures the various ports used for services
 // provided by the Consul server.
 type TestPortConfig struct {
 	DNS     int `json:"dns,omitempty"`
 	HTTP    int `json:"http,omitempty"`
-	RPC     int `json:"rpc,omitempty"`
 	SerfLan int `json:"serf_lan,omitempty"`
 	SerfWan int `json:"serf_wan,omitempty"`
 	Server  int `json:"server,omitempty"`
@@ -50,20 +53,24 @@ type TestAddressConfig struct {
 
 // TestServerConfig is the main server configuration struct.
 type TestServerConfig struct {
-	NodeName          string             `json:"node_name"`
-	Bootstrap         bool               `json:"bootstrap,omitempty"`
-	Server            bool               `json:"server,omitempty"`
-	DataDir           string             `json:"data_dir,omitempty"`
-	Datacenter        string             `json:"datacenter,omitempty"`
-	DisableCheckpoint bool               `json:"disable_update_check"`
-	LogLevel          string             `json:"log_level,omitempty"`
-	Bind              string             `json:"bind_addr,omitempty"`
-	Addresses         *TestAddressConfig `json:"addresses,omitempty"`
-	Ports             *TestPortConfig    `json:"ports,omitempty"`
-	ACLMasterToken    string             `json:"acl_master_token,omitempty"`
-	ACLDatacenter     string             `json:"acl_datacenter,omitempty"`
-	ACLDefaultPolicy  string             `json:"acl_default_policy,omitempty"`
-	Stdout, Stderr    io.Writer          `json:"-"`
+	NodeName          string                 `json:"node_name"`
+	NodeMeta          map[string]string      `json:"node_meta,omitempty"`
+	Performance       *TestPerformanceConfig `json:"performance,omitempty"`
+	Bootstrap         bool                   `json:"bootstrap,omitempty"`
+	Server            bool                   `json:"server,omitempty"`
+	DataDir           string                 `json:"data_dir,omitempty"`
+	Datacenter        string                 `json:"datacenter,omitempty"`
+	DisableCheckpoint bool                   `json:"disable_update_check"`
+	LogLevel          string                 `json:"log_level,omitempty"`
+	Bind              string                 `json:"bind_addr,omitempty"`
+	Addresses         *TestAddressConfig     `json:"addresses,omitempty"`
+	Ports             *TestPortConfig        `json:"ports,omitempty"`
+	ACLMasterToken    string                 `json:"acl_master_token,omitempty"`
+	ACLDatacenter     string                 `json:"acl_datacenter,omitempty"`
+	ACLDefaultPolicy  string                 `json:"acl_default_policy,omitempty"`
+	Encrypt           string                 `json:"encrypt,omitempty"`
+	Stdout, Stderr    io.Writer              `json:"-"`
+	Args              []string               `json:"-"`
 }
 
 // ServerConfigCallback is a function interface which can be
@@ -73,25 +80,35 @@ type ServerConfigCallback func(c *TestServerConfig)
 // defaultServerConfig returns a new TestServerConfig struct
 // with all of the listen ports incremented by one.
 func defaultServerConfig() *TestServerConfig {
-	idx := int(atomic.AddUint64(&offset, 1))
-
 	return &TestServerConfig{
-		NodeName:          fmt.Sprintf("node%d", idx),
+		NodeName:          fmt.Sprintf("node%d", randomPort()),
 		DisableCheckpoint: true,
-		Bootstrap:         true,
-		Server:            true,
-		LogLevel:          "debug",
-		Bind:              "127.0.0.1",
-		Addresses:         &TestAddressConfig{},
+		Performance: &TestPerformanceConfig{
+			RaftMultiplier: 1,
+		},
+		Bootstrap: true,
+		Server:    true,
+		LogLevel:  "debug",
+		Bind:      "127.0.0.1",
+		Addresses: &TestAddressConfig{},
 		Ports: &TestPortConfig{
-			DNS:     20000 + idx,
-			HTTP:    21000 + idx,
-			RPC:     22000 + idx,
-			SerfLan: 23000 + idx,
-			SerfWan: 24000 + idx,
-			Server:  25000 + idx,
+			DNS:     randomPort(),
+			HTTP:    randomPort(),
+			SerfLan: randomPort(),
+			SerfWan: randomPort(),
+			Server:  randomPort(),
 		},
 	}
+}
+
+// randomPort asks the kernel for a random port to use.
+func randomPort() int {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		panic(err)
+	}
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port
 }
 
 // TestService is used to serialize a service definition.
@@ -127,7 +144,7 @@ type TestKVResponse struct {
 
 // TestServer is the main server wrapper struct.
 type TestServer struct {
-	PID    int
+	cmd    *exec.Cmd
 	Config *TestServerConfig
 	t      TestingT
 
@@ -148,7 +165,8 @@ func NewTestServer(t TestingT) *TestServer {
 // an optional callback function to modify the configuration.
 func NewTestServerConfig(t TestingT, cb ServerConfigCallback) *TestServer {
 	if path, err := exec.LookPath("consul"); err != nil || path == "" {
-		t.Skip("consul not found on $PATH, skipping")
+		t.Fatal("consul not found on $PATH - download and install " +
+			"consul or skip this test")
 	}
 
 	dataDir, err := ioutil.TempDir("", "consul")
@@ -190,7 +208,9 @@ func NewTestServerConfig(t TestingT, cb ServerConfigCallback) *TestServer {
 	}
 
 	// Start the server
-	cmd := exec.Command("consul", "agent", "-config-file", configFile.Name())
+	args := []string{"agent", "-config-file", configFile.Name()}
+	args = append(args, consulConfig.Args...)
+	cmd := exec.Command("consul", args...)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	if err := cmd.Start(); err != nil {
@@ -202,7 +222,7 @@ func NewTestServerConfig(t TestingT, cb ServerConfigCallback) *TestServer {
 	if strings.HasPrefix(consulConfig.Addresses.HTTP, "unix://") {
 		httpAddr = consulConfig.Addresses.HTTP
 		trans := cleanhttp.DefaultTransport()
-		trans.Dial = func(_, _ string) (net.Conn, error) {
+		trans.DialContext = func(_ context.Context, _, _ string) (net.Conn, error) {
 			return net.Dial("unix", httpAddr[7:])
 		}
 		client = &http.Client{
@@ -215,7 +235,7 @@ func NewTestServerConfig(t TestingT, cb ServerConfigCallback) *TestServer {
 
 	server := &TestServer{
 		Config: consulConfig,
-		PID:    cmd.Process.Pid,
+		cmd:    cmd,
 		t:      t,
 
 		HTTPAddr: httpAddr,
@@ -240,10 +260,13 @@ func NewTestServerConfig(t TestingT, cb ServerConfigCallback) *TestServer {
 func (s *TestServer) Stop() {
 	defer os.RemoveAll(s.Config.DataDir)
 
-	cmd := exec.Command("kill", "-9", fmt.Sprintf("%d", s.PID))
-	if err := cmd.Run(); err != nil {
+	if err := s.cmd.Process.Kill(); err != nil {
 		s.t.Errorf("err: %s", err)
 	}
+
+	// wait for the process to exit to be sure that the data dir can be
+	// deleted on all platforms.
+	s.cmd.Wait()
 }
 
 // waitForAPI waits for only the agent HTTP endpoint to start
@@ -269,10 +292,13 @@ func (s *TestServer) waitForAPI() {
 // waitForLeader waits for the Consul server's HTTP API to become
 // available, and then waits for a known leader and an index of
 // 1 or more to be observed to confirm leader election is done.
+// It then waits to ensure the anti-entropy sync has completed.
 func (s *TestServer) waitForLeader() {
+	var index int64
 	WaitForResult(func() (bool, error) {
-		// Query the API and check the status code
-		resp, err := s.HttpClient.Get(s.url("/v1/catalog/nodes"))
+		// Query the API and check the status code.
+		url := s.url(fmt.Sprintf("/v1/catalog/nodes?index=%d&wait=2s", index))
+		resp, err := s.HttpClient.Get(url)
 		if err != nil {
 			return false, err
 		}
@@ -281,13 +307,33 @@ func (s *TestServer) waitForLeader() {
 			return false, err
 		}
 
-		// Ensure we have a leader and a node registration
+		// Ensure we have a leader and a node registration.
 		if leader := resp.Header.Get("X-Consul-KnownLeader"); leader != "true" {
-			fmt.Println(leader)
 			return false, fmt.Errorf("Consul leader status: %#v", leader)
 		}
-		if resp.Header.Get("X-Consul-Index") == "0" {
+		index, err = strconv.ParseInt(resp.Header.Get("X-Consul-Index"), 10, 64)
+		if err != nil {
+			return false, fmt.Errorf("Consul index was bad: %v", err)
+		}
+		if index == 0 {
 			return false, fmt.Errorf("Consul index is 0")
+		}
+
+		// Watch for the anti-entropy sync to finish.
+		var parsed []map[string]interface{}
+		dec := json.NewDecoder(resp.Body)
+		if err := dec.Decode(&parsed); err != nil {
+			return false, err
+		}
+		if len(parsed) < 1 {
+			return false, fmt.Errorf("No nodes")
+		}
+		taggedAddresses, ok := parsed[0]["TaggedAddresses"].(map[string]interface{})
+		if !ok {
+			return false, fmt.Errorf("Missing tagged addresses")
+		}
+		if _, ok := taggedAddresses["lan"]; !ok {
+			return false, fmt.Errorf("No lan tagged addresses")
 		}
 		return true, nil
 	}, func(err error) {
@@ -441,11 +487,11 @@ func (s *TestServer) AddService(name, status string, tags []string) {
 	s.put("/v1/agent/check/register", payload)
 
 	switch status {
-	case "passing":
+	case structs.HealthPassing:
 		s.put("/v1/agent/check/pass/"+chkName, nil)
-	case "warning":
+	case structs.HealthWarning:
 		s.put("/v1/agent/check/warn/"+chkName, nil)
-	case "critical":
+	case structs.HealthCritical:
 		s.put("/v1/agent/check/fail/"+chkName, nil)
 	default:
 		s.t.Fatalf("Unrecognized status: %s", status)
@@ -469,11 +515,11 @@ func (s *TestServer) AddCheck(name, serviceID, status string) {
 	s.put("/v1/agent/check/register", payload)
 
 	switch status {
-	case "passing":
+	case structs.HealthPassing:
 		s.put("/v1/agent/check/pass/"+name, nil)
-	case "warning":
+	case structs.HealthWarning:
 		s.put("/v1/agent/check/warn/"+name, nil)
-	case "critical":
+	case structs.HealthCritical:
 		s.put("/v1/agent/check/fail/"+name, nil)
 	default:
 		s.t.Fatalf("Unrecognized status: %s", status)

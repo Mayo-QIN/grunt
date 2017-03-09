@@ -46,7 +46,7 @@ server: localhost:9901
 # This is the directory path used for working files. If left blank,
 # use a system temp directory.
 # NB: To run in the pesscara/grunt docker, this must be set to /data
-directory: /data
+directory: data
 
 # Report Warn status to Consul when we have more than warnLevel jobs
 warnLevel: 3
@@ -73,4 +73,8 @@ services:
       seconds: 300
   - endPoint: copy
     commandLine: ["cp", "<input", ">output"]
+    description: copy a file
+  - endPoint: copy-dir
+    commandLine: ["cp", "-r", "-f", "^input", "~output"]
+    create_empty_output: false
     description: copy a file

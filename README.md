@@ -1,52 +1,48 @@
 # Grunt
 
-Grunt is a Go server that exposes a REST interface to command line programs.  Grunt is configured through a simple YML file or CLI XML.
-
+Grunt is a Go server that exposes a REST interface to command line programs.  Grunt is configured through a simple YML file.
 
 ## Build
 
-`make grunt`
+In the wild use:
 
-`make demo # contains the basic image`
+``` bash
+go get github.com/Mayo-QIN/grunt
+```
+
+In a clone of the repo (kudos to the fine [Hellogopher](https://github.com/cloudflare/hellogopher)):
+
+``` bash
+make
+```
 
 ## Run
 
-`grunt -p 9901 gruntfile.yml`
+`grunt gruntfile.yml`
 
 Run grunt on port `9901` (the default listening port).
 
-## run demo
+## Fancy demo
 
-Demo
-** Need to execute as root or sudo **
+```bash
+# Build the grunt docker
+docker build -t grunt .
 
-    make demo
+# Run
+docker run -d -p 9901:9901 grunt
+```
 
-Was my docker image created?
-    docker image
-if you can see pesscara/grunt yes
-Then to lunch the docker type:
-
-    docker run -d -p 9901:9901 pesscara/grunt
-
-or for ants:
-
-    docker run -i -p 9901:9903 pesscara/ants
-
-You can check that docker is runing utiliing the floowing command
-
-    docker ps 
-
+Check the grunt web interface http://localhost:9901
 
 ## REST Endpoints
 
-| endpoint                        | method | parameters       | description                                                 |
-|---------------------------------|--------|------------------|-------------------------------------------------------------|
-| `/rest/service`                 | GET    | --               | List the services available                                 |
-| `/rest/service/{id}             | GET    | `id`             | Detail for service `id`                                     |
-| `/rest/service/{id}             | POST   | `id`             | Start a new Job using service `id`                          |
-| `/rest/job/{id}`                | GET    | `id`             | Details about a Job                                         |
-| `/rest/job/wait/{id}`           | GET    | `id`             | Does not return until the Job completes                     |
+| endpoint                         | method | parameters       | description                                                 |
+|----------------------------------|--------|------------------|-------------------------------------------------------------|
+| `/rest/service`                  | GET    | --               | List the services available                                 |
+| `/rest/service/{id}              | GET    | `id`             | Detail for service `id`                                     |
+| `/rest/service/{id}              | POST   | `id`             | Start a new Job using service `id`                          |
+| `/rest/job/{id}`                 | GET    | `id`             | Details about a Job                                         |
+| `/rest/job/wait/{id}`            | GET    | `id`             | Does not return until the Job completes                     |
 | `/rest/job/{id}/file/{filename}` | GET    | `id`, `filename` | Retrieve the file `filename` from the Job specified by `id` |
 
 ## Configuration
@@ -57,14 +53,18 @@ An example configuration is found in `gruntfile.yml`. A service consists of the 
 endPoint      -- REST endpoint, e.g. /rest/service/<endPoint>
 commandLine   -- Command line to run
                  Some special command line parameters are
-                 @value  -- replace this argument with the parameter from the POST
+                 #value  -- replace this argument with the parameter from the POST
                  <in     -- look for an uploaded file
                  >out    -- the process will generate this file for later download
+                 ^in     -- uploaded file must be a zip file, extract in a directory (called in) and pass directory name as an argument
+                 ~out    -- specify out on the command line as a directory, zip contents for download
 description   -- description of the endpoint
-defaults      -- a hashmap of default values for "@value" parameters
+defaults      -- a hashmap of default values for "#value" parameters
 ```
 
-This example configuration file exposes 2 endpoints, test and copy. `test` simply echoes the input and can be called like this:
+## Copy Example
+
+The example file `gruntfile.yml` exposes some endpoints. `test` simply echoes the input and can be called like this:
 
 ```
 curl -X POST  -v --form Message=hi localhost:9991/rest/service/test
@@ -76,8 +76,8 @@ copy takes input and output files.  `<in` must be provided
 curl -X POST  -v --form in=@big_file.txt --form out=small_file.txt localhost:9901/rest/service/copy
 ```
 
-NB: "--form in=@big_file.txt" indicates that curl should send big_file.txt as the form parameter `in`
-and the output filename is set to "small_file.txt"
+NB: `--form in=@big_file.txt` indicates that curl should send big_file.txt as the form parameter `in`
+and the output filename is set to `small_file.txt`
 
 the following example leverages the slicer's CLI xml configureation
 
@@ -100,18 +100,22 @@ id=`curl --silent -X POST --form in=@big_file.txt --form out=small_file.txt loca
 wget --content-disposition localhost:9901/rest/job/$id/file/out
 ```
 
+## copy-dir example
+
+```bash
+# Have a zip file called `test.zip` in the current directory
+# Start the job and extract the uuid using jq
+id=`curl --silent -X POST --form in=@test.zip --form out=out.zip localhost:9901/rest/service/copy-dir | jq -r .uuid`
+
+# Status of the job
+curl -v localhost:9901/rest/job/$id
+
+# Wait for the job to complete
+curl -v localhost:9901/rest/job/wait/$id
+```
 
 
-## Building
-
-make grunt
-
-
-## Development
-
-These tools are written in the [Go language](https://golang.org/).  Makefile targets are listed by `make help`.
-
-## Example
+## Sleep example
 
 This is an example of running the `sleep` job for 120 seconds.
 
@@ -126,58 +130,6 @@ curl -v localhost:9901/rest/job/$id
 curl -v localhost:9901/rest/job/wait/$id
 ```
 
-## Docker notes
-### Delete the docker images you do not need. 
-
-Once the docker is up an running 
-
-perform:
-
-`docker ps `
-
-or 
-
-`docker ps -a ` if the container was stoped. 
-
-The output will be something like 
-
-    |=> docker ps 
-    CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS               NAMES
-    aa4f094a4a55        a4a20e41aa68        "/bin/sh -c 'curl ..."   6 minutes ago       Up 6 minutes        9901/tcp            romantic_meitner
-
-
-select the conaitner ID and perform
-
-```
-docker rmi {CONTAINER ID}
-```
-
-### Stop all contaiers
-
-```
-docker stop $(docker ps -a -q)
-```
-
-if you need to stop a specific container 
-```
-docker stop {CONTAINER ID}
-```
-
-### Remove a specific iamge 
-
-Perform 
-
-`docker images`
-
-select the image container ID 
-
-and execute 
-
-```
-docker rm {CONTAINER ID}
-```
-
-
 ## Acknowledgement 
 
-Supported by the NCI Grant CA160045
+Supported by the NCI Grant CA160045.

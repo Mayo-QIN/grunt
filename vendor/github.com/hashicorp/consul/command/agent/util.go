@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/hashicorp/consul/types"
 	"github.com/hashicorp/go-msgpack/codec"
 )
 
@@ -24,6 +25,13 @@ const (
 	// CoordinateUpdatePeriod and CoordinateUpdateMaxBatchSize.
 	aeScaleThreshold = 128
 )
+
+// msgpackHandle is a shared handle for encoding/decoding of
+// messages
+var msgpackHandle = &codec.MsgpackHandle{
+	RawToString: true,
+	WriteExt:    true,
+}
 
 // aeScale is used to scale the time interval at which anti-entropy updates take
 // place. It is used to prevent saturation as the cluster size grows.
@@ -69,6 +77,11 @@ func encodeMsgPack(msg interface{}) ([]byte, error) {
 // stringHash returns a simple md5sum for a string.
 func stringHash(s string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(s)))
+}
+
+// checkIDHash returns a simple md5sum for a types.CheckID.
+func checkIDHash(checkID types.CheckID) string {
+	return stringHash(string(checkID))
 }
 
 // FilePermissions is an interface which allows a struct to set
