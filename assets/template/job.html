@@ -9,11 +9,12 @@
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
   </head>
   <body>
+    {{ template "template/header.html" . }}
 
     <div class="container">
-      <h1>Job detail</h1>
+      <h1>Job detail as of {{ now }}</h1>
 
-    {{ with .job }}
+      {{ with .job }}
       <div class="row">
         <div class="col-sm-4">UUID</div>
         <div class="col-sm-8">{{.UUID}}</div>
@@ -21,12 +22,12 @@
 
       <div class="row">
         <div class="col-sm-4">Command line</div>
-        <div class="col-sm-8">{{.CommandLine}}</div>
+        <div class="col-sm-8">{{range .CommandLine}}{{.}} {{end}}</div>
       </div>
       
       <div class="row">
         <div class="col-sm-4">Parsed line</div>
-        <div class="col-sm-8">{{.ParsedCommandLine}}</div>
+        <div class="col-sm-8">{{range .ParsedCommandLine}}{{.}} {{end}}</div>
       </div>
 
       <table class="table table-striped">
@@ -38,19 +39,19 @@
         <tbody>
           <tr>
             
-          {{$uuid := .UUID}}
-          <td><a href="/rest/job/{{$uuid}}/zip">Zip file of all inputs and outputs</a></td>
-          {{range $key, $value := .FileMap}}
-          <tr>
-            <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
-          </tr>
+            {{$uuid := .UUID}}
+            <td><a href="/rest/job/{{$uuid}}/zip">Zip file of all inputs and outputs</a></td>
+            {{range $key, $value := .FileMap}}
+            <tr>
+              <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
+            </tr>
             {{end}}
         </tbody>
       </table>
       <div class="panel panel-default">
         <div class="panel-heading">Log</div>
         <div class="panel-body">
-          <pre>{{.Output.String}}</pre>
+          <pre>{{.OutputString}}</pre>
         </div>
       </div>
       
