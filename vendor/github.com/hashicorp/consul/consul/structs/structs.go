@@ -8,8 +8,11 @@ import (
 	"time"
 
 	"github.com/hashicorp/consul/acl"
+	"github.com/hashicorp/consul/types"
 	"github.com/hashicorp/go-msgpack/codec"
 	"github.com/hashicorp/serf/coordinate"
+	"regexp"
+	"strings"
 )
 
 var (
@@ -36,6 +39,8 @@ const (
 	TombstoneRequestType
 	CoordinateBatchUpdateType
 	PreparedQueryRequestType
+	TxnRequestType
+	AutopilotRequestType
 )
 
 const (
@@ -51,10 +56,37 @@ const (
 	// HealthAny is special, and is used as a wild card,
 	// not as a specific state.
 	HealthAny      = "any"
-	HealthUnknown  = "unknown"
 	HealthPassing  = "passing"
 	HealthWarning  = "warning"
 	HealthCritical = "critical"
+	HealthMaint    = "maintenance"
+)
+
+const (
+	// NodeMaint is the special key set by a node in maintenance mode.
+	NodeMaint = "_node_maintenance"
+
+	// ServiceMaintPrefix is the prefix for a service in maintenance mode.
+	ServiceMaintPrefix = "_service_maintenance:"
+)
+
+const (
+	// The meta key prefix reserved for Consul's internal use
+	metaKeyReservedPrefix = "consul-"
+
+	// The maximum number of metadata key pairs allowed to be registered
+	metaMaxKeyPairs = 64
+
+	// The maximum allowed length of a metadata key
+	metaKeyMaxLength = 128
+
+	// The maximum allowed length of a metadata value
+	metaValueMaxLength = 512
+)
+
+var (
+	// metaKeyFormat checks if a metadata key string is valid
+	metaKeyFormat = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`).MatchString
 )
 
 func ValidStatus(s string) bool {
@@ -160,9 +192,11 @@ type QueryMeta struct {
 // is provided, the node is registered.
 type RegisterRequest struct {
 	Datacenter      string
+	ID              types.NodeID
 	Node            string
 	Address         string
 	TaggedAddresses map[string]string
+	NodeMeta        map[string]string
 	Service         *NodeService
 	Check           *HealthCheck
 	Checks          HealthChecks
@@ -173,6 +207,27 @@ func (r *RegisterRequest) RequestDatacenter() string {
 	return r.Datacenter
 }
 
+// ChangesNode returns true if the given register request changes the given
+// node, which can be nil. This only looks for changes to the node record itself,
+// not any of the health checks.
+func (r *RegisterRequest) ChangesNode(node *Node) bool {
+	// This means it's creating the node.
+	if node == nil {
+		return true
+	}
+
+	// Check if any of the node-level fields are being changed.
+	if r.ID != node.ID ||
+		r.Node != node.Node ||
+		r.Address != node.Address ||
+		!reflect.DeepEqual(r.TaggedAddresses, node.TaggedAddresses) ||
+		!reflect.DeepEqual(r.NodeMeta, node.Meta) {
+		return true
+	}
+
+	return false
+}
+
 // DeregisterRequest is used for the Catalog.Deregister endpoint
 // to deregister a node as providing a service. If no service is
 // provided the entire node is deregistered.
@@ -180,7 +235,7 @@ type DeregisterRequest struct {
 	Datacenter string
 	Node       string
 	ServiceID  string
-	CheckID    string
+	CheckID    types.CheckID
 	WriteRequest
 }
 
@@ -198,8 +253,9 @@ type QuerySource struct {
 
 // DCSpecificRequest is used to query about a specific DC
 type DCSpecificRequest struct {
-	Datacenter string
-	Source     QuerySource
+	Datacenter      string
+	NodeMetaFilters map[string]string
+	Source          QuerySource
 	QueryOptions
 }
 
@@ -209,11 +265,12 @@ func (r *DCSpecificRequest) RequestDatacenter() string {
 
 // ServiceSpecificRequest is used to query about a specific service
 type ServiceSpecificRequest struct {
-	Datacenter  string
-	ServiceName string
-	ServiceTag  string
-	TagFilter   bool // Controls tag filtering
-	Source      QuerySource
+	Datacenter      string
+	NodeMetaFilters map[string]string
+	ServiceName     string
+	ServiceTag      string
+	TagFilter       bool // Controls tag filtering
+	Source          QuerySource
 	QueryOptions
 }
 
@@ -234,9 +291,10 @@ func (r *NodeSpecificRequest) RequestDatacenter() string {
 
 // ChecksInStateRequest is used to query for nodes in a state
 type ChecksInStateRequest struct {
-	Datacenter string
-	State      string
-	Source     QuerySource
+	Datacenter      string
+	NodeMetaFilters map[string]string
+	State           string
+	Source          QuerySource
 	QueryOptions
 }
 
@@ -246,22 +304,76 @@ func (r *ChecksInStateRequest) RequestDatacenter() string {
 
 // Used to return information about a node
 type Node struct {
+	ID              types.NodeID
 	Node            string
 	Address         string
 	TaggedAddresses map[string]string
+	Meta            map[string]string
 
 	RaftIndex
 }
 type Nodes []*Node
 
+// ValidateMeta validates a set of key/value pairs from the agent config
+func ValidateMetadata(meta map[string]string) error {
+	if len(meta) > metaMaxKeyPairs {
+		return fmt.Errorf("Node metadata cannot contain more than %d key/value pairs", metaMaxKeyPairs)
+	}
+
+	for key, value := range meta {
+		if err := validateMetaPair(key, value); err != nil {
+			return fmt.Errorf("Couldn't load metadata pair ('%s', '%s'): %s", key, value, err)
+		}
+	}
+
+	return nil
+}
+
+// validateMetaPair checks that the given key/value pair is in a valid format
+func validateMetaPair(key, value string) error {
+	if key == "" {
+		return fmt.Errorf("Key cannot be blank")
+	}
+	if !metaKeyFormat(key) {
+		return fmt.Errorf("Key contains invalid characters")
+	}
+	if len(key) > metaKeyMaxLength {
+		return fmt.Errorf("Key is too long (limit: %d characters)", metaKeyMaxLength)
+	}
+	if strings.HasPrefix(key, metaKeyReservedPrefix) {
+		return fmt.Errorf("Key prefix '%s' is reserved for internal use", metaKeyReservedPrefix)
+	}
+	if len(value) > metaValueMaxLength {
+		return fmt.Errorf("Value is too long (limit: %d characters)", metaValueMaxLength)
+	}
+	return nil
+}
+
+// SatisfiesMetaFilters returns true if the metadata map contains the given filters
+func SatisfiesMetaFilters(meta map[string]string, filters map[string]string) bool {
+	for key, value := range filters {
+		if v, ok := meta[key]; !ok || v != value {
+			return false
+		}
+	}
+	return true
+}
+
 // Used to return information about a provided services.
 // Maps service name to available tags
 type Services map[string][]string
 
-// ServiceNode represents a node that is part of a service
+// ServiceNode represents a node that is part of a service. ID, Address,
+// TaggedAddresses, and NodeMeta are node-related fields that are always empty
+// in the state store and are filled in on the way out by parseServiceNodes().
+// This is also why PartialClone() skips them, because we know they are blank
+// already so it would be a waste of time to copy them.
 type ServiceNode struct {
+	ID                       types.NodeID
 	Node                     string
 	Address                  string
+	TaggedAddresses          map[string]string
+	NodeMeta                 map[string]string
 	ServiceID                string
 	ServiceName              string
 	ServiceTags              []string
@@ -272,14 +384,17 @@ type ServiceNode struct {
 	RaftIndex
 }
 
-// Clone returns a clone of the given service node.
-func (s *ServiceNode) Clone() *ServiceNode {
+// PartialClone() returns a clone of the given service node, minus the node-
+// related fields that get filled in later, Address and TaggedAddresses.
+func (s *ServiceNode) PartialClone() *ServiceNode {
 	tags := make([]string, len(s.ServiceTags))
 	copy(tags, s.ServiceTags)
 
 	return &ServiceNode{
-		Node:                     s.Node,
-		Address:                  s.Address,
+		// Skip ID, see above.
+		Node: s.Node,
+		// Skip Address, see above.
+		// Skip TaggedAddresses, see above.
 		ServiceID:                s.ServiceID,
 		ServiceName:              s.ServiceName,
 		ServiceTags:              tags,
@@ -341,10 +456,12 @@ func (s *NodeService) IsSame(other *NodeService) bool {
 }
 
 // ToServiceNode converts the given node service to a service node.
-func (s *NodeService) ToServiceNode(node, address string) *ServiceNode {
+func (s *NodeService) ToServiceNode(node string) *ServiceNode {
 	return &ServiceNode{
-		Node:                     node,
-		Address:                  address,
+		// Skip ID, see ServiceNode definition.
+		Node: node,
+		// Skip Address, see ServiceNode definition.
+		// Skip TaggedAddresses, see ServiceNode definition.
 		ServiceID:                s.ID,
 		ServiceName:              s.Service,
 		ServiceTags:              s.Tags,
@@ -366,13 +483,13 @@ type NodeServices struct {
 // HealthCheck represents a single check on a given node
 type HealthCheck struct {
 	Node        string
-	CheckID     string // Unique per-node ID
-	Name        string // Check name
-	Status      string // The current check status
-	Notes       string // Additional notes with the status
-	Output      string // Holds output of script runs
-	ServiceID   string // optional associated service
-	ServiceName string // optional service name
+	CheckID     types.CheckID // Unique per-node ID
+	Name        string        // Check name
+	Status      string        // The current check status
+	Notes       string        // Additional notes with the status
+	Output      string        // Holds output of script runs
+	ServiceID   string        // optional associated service
+	ServiceName string        // optional service name
 
 	RaftIndex
 }
@@ -396,6 +513,14 @@ func (c *HealthCheck) IsSame(other *HealthCheck) bool {
 	return true
 }
 
+// Clone returns a distinct clone of the HealthCheck.
+func (c *HealthCheck) Clone() *HealthCheck {
+	clone := new(HealthCheck)
+	*clone = *c
+	return clone
+}
+
+// HealthChecks is a collection of HealthCheck structs.
 type HealthChecks []*HealthCheck
 
 // CheckServiceNode is used to provide the node, its service
@@ -440,11 +565,13 @@ OUTER:
 // a node. This is currently used for the UI only, as it is
 // rather expensive to generate.
 type NodeInfo struct {
+	ID              types.NodeID
 	Node            string
 	Address         string
 	TaggedAddresses map[string]string
+	Meta            map[string]string
 	Services        []*NodeService
-	Checks          []*HealthCheck
+	Checks          HealthChecks
 }
 
 // NodeDump is used to dump all the nodes with all their
@@ -526,7 +653,25 @@ const (
 	KVSCAS              = "cas"    // Check-and-set
 	KVSLock             = "lock"   // Lock a key
 	KVSUnlock           = "unlock" // Unlock a key
+
+	// The following operations are only available inside of atomic
+	// transactions via the Txn request.
+	KVSGet          = "get"           // Read the key during the transaction.
+	KVSGetTree      = "get-tree"      // Read all keys with the given prefix during the transaction.
+	KVSCheckSession = "check-session" // Check the session holds the key.
+	KVSCheckIndex   = "check-index"   // Check the modify index of the key.
 )
+
+// IsWrite returns true if the given operation alters the state store.
+func (op KVSOp) IsWrite() bool {
+	switch op {
+	case KVSGet, KVSGetTree, KVSCheckSession, KVSCheckIndex:
+		return false
+
+	default:
+		return true
+	}
+}
 
 // KVSRequest is used to operate on the Key-Value store
 type KVSRequest struct {
@@ -591,7 +736,7 @@ type Session struct {
 	ID        string
 	Name      string
 	Node      string
-	Checks    []string
+	Checks    []types.CheckID
 	LockDelay time.Duration
 	Behavior  SessionBehavior // What to do when session is invalidated
 	TTL       string
@@ -635,7 +780,7 @@ type IndexedSessions struct {
 	QueryMeta
 }
 
-// ACL is used to represent a token and it's rules
+// ACL is used to represent a token and its rules
 type ACL struct {
 	ID    string
 	Name  string
@@ -654,6 +799,21 @@ const (
 	ACLDelete         = "delete"
 )
 
+// IsSame checks if one ACL is the same as another, without looking
+// at the Raft information (that's why we didn't call it IsEqual). This is
+// useful for seeing if an update would be idempotent for all the functional
+// parts of the structure.
+func (a *ACL) IsSame(other *ACL) bool {
+	if a.ID != other.ID ||
+		a.Name != other.Name ||
+		a.Type != other.Type ||
+		a.Rules != other.Rules {
+		return false
+	}
+
+	return true
+}
+
 // ACLRequest is used to create, update or delete an ACL
 type ACLRequest struct {
 	Datacenter string
@@ -665,6 +825,9 @@ type ACLRequest struct {
 func (r *ACLRequest) RequestDatacenter() string {
 	return r.Datacenter
 }
+
+// ACLRequests is a list of ACL change requests.
+type ACLRequests []*ACLRequest
 
 // ACLSpecificRequest is used to request an ACL by ID
 type ACLSpecificRequest struct {
@@ -701,6 +864,17 @@ type ACLPolicy struct {
 	Policy *acl.Policy
 	TTL    time.Duration
 	QueryMeta
+}
+
+// ACLReplicationStatus provides information about the health of the ACL
+// replication system.
+type ACLReplicationStatus struct {
+	Enabled          bool
+	Running          bool
+	SourceDatacenter string
+	ReplicatedIndex  uint64
+	LastSuccess      time.Time
+	LastError        time.Time
 }
 
 // Coordinate stores a node name with its associated network coordinate.
@@ -827,10 +1001,11 @@ const (
 // KeyringRequest encapsulates a request to modify an encryption keyring.
 // It can be used for install, remove, or use key type operations.
 type KeyringRequest struct {
-	Operation  KeyringOp
-	Key        string
-	Datacenter string
-	Forwarded  bool
+	Operation   KeyringOp
+	Key         string
+	Datacenter  string
+	Forwarded   bool
+	RelayFactor uint8
 	QueryOptions
 }
 
@@ -843,10 +1018,10 @@ func (r *KeyringRequest) RequestDatacenter() string {
 type KeyringResponse struct {
 	WAN        bool
 	Datacenter string
-	Messages   map[string]string
+	Messages   map[string]string `json:",omitempty"`
 	Keys       map[string]int
 	NumNodes   int
-	Error      string
+	Error      string `json:",omitempty"`
 }
 
 // KeyringResponses holds multiple responses to keyring queries. Each
