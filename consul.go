@@ -16,7 +16,7 @@ import (
 var serviceIDs []string
 var agent *consulclient.Agent
 
-func init() {
+func setupConsul() {
 	var err error
 
 	// Check environment variables
@@ -52,16 +52,10 @@ func init() {
 		}
 	}
 
-	log.Printf("Consul: %v:%d", consulHost, consulPort)
-	log.Printf("Advertised: %v:%d", advertisedHost, advertisedPort)
-
 	if !(advertisedHost != "" && advertisedPort != 0 && consulHost != "" && consulPort != 0) {
 		log.Printf("not connecting to Consul.  Please set consulHost, consulPort, advertisedHost, advertisedPort in gruntfile.yml, or set the CONSUL_ADDR, CONSUL_PORT_8500_TCP_PORT, ADVERTISED_PORT, ADVERTISED_HOST environment variables")
 		return
 	}
-
-	advertised := fmt.Sprintf("%v:%d", advertisedHost, advertisedPort)
-	log.Printf("advertising as %+v\n", advertised)
 
 	consulConfig := consulclient.DefaultConfig()
 	consulConfig.Address = fmt.Sprintf("%v:%d", consulHost, consulPort)
@@ -70,7 +64,6 @@ func init() {
 		log.Fatal(err)
 	}
 
-	log.Printf("connected to consul %+v\n", consul)
 	agent = consul.Agent()
 
 	// Register cleanup callback
@@ -98,6 +91,8 @@ func registerConfigWithConsul(configD *ConfigD) {
 	if len(configD.Services) == 0 {
 		return
 	}
+
+	setupConsul()
 
 	if agent == nil {
 		log.Printf("not registering %v with consul, no connection exists", configD.Name)
@@ -127,7 +122,7 @@ func registerConfigWithConsul(configD *ConfigD) {
 		log.Printf("error registering %v", err.Error())
 	}
 
-	log.Printf("Registered: %+v", service)
+	log.Printf("Registered %v / %v @ %v:%v with consul", service.Name, service.ID, service.Address, service.Port)
 	serviceIDs = append(serviceIDs, service.ID)
 
 	// Register our check
@@ -153,7 +148,6 @@ func registerConfigWithConsul(configD *ConfigD) {
 				}
 			}
 		}
-		// numberOfJobs := len(jobs)
 		if numberOfJobs <= config.WarnLevel {
 			agent.PassTTL(check.Name, fmt.Sprintf("%d jobs", numberOfJobs))
 		} else if numberOfJobs <= config.CriticalLevel {

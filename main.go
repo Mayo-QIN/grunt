@@ -31,6 +31,7 @@ type Config struct {
 	SlicerServices  []*SlicerService    `yaml:"cli" json:"-"`
 	ServiceMap      map[string]*Service `json:"-"`
 	Mail            SMTP                `json:"mail"`
+	Name            string              `json:"name"`
 	Server          string              `json:"server"`
 	Directory       string              `json:"working_directory"`
 	ConfigDirectory string              `json:"config_directory" yaml:"configDirectory"`
@@ -86,7 +87,7 @@ func main() {
 	}
 
 	// Register the main grunt services
-	c := ConfigD{Name: "grunt", Services: config.Services}
+	c := ConfigD{Name: config.Name, Services: config.Services}
 	registerConfigWithConsul(&c)
 
 	// Read all the files in the config directory
