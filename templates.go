@@ -64,16 +64,16 @@ func Template(name string, data map[string]interface{}, w http.ResponseWriter, r
 
 	// merge in our extra data
 	mergo.Map(&templateData, data)
-	/*
-		contents, _ := Asset("template/" + name + ".html")
-		if debug {
-			contents, _ = dassets.Asset("template/" + name + ".html")
-		}
-	*/
 	if debug {
 		templates = template.New("").Funcs(funcs)
 		loadTemplates(dassets.AssetNames(), dassets.Asset)
 	}
+
+	if templates.Lookup("template/"+name) == nil {
+		http.Error(w, name+" is not found", http.StatusNotFound)
+		return
+	}
+
 	err := templates.ExecuteTemplate(w, "template/"+name, templateData)
 	if err != nil {
 		log.Printf("error in template %v", err.Error())
