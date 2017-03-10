@@ -10,7 +10,7 @@ VOLUME /data
 
 # Build grunt
 RUN yum install -y git wget curl
-ADD https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz /root
+RUN cd /root && wget --quiet https://storage.googleapis.com/golang/go1.7.linux-amd64.tar.gz
 RUN tar -C /usr/local -xzf /root/go1.7.linux-amd64.tar.gz
 RUN rm -f /root/go1.7.linux-amd64.tar.gz
 ENV GOPATH=/root
