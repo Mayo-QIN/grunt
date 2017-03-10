@@ -1,7 +1,7 @@
 package main
 
-//go:generate bin/go-bindata -prefix assets -o assets.go assets/... README.md
-//go:generate bin/go-bindata -debug -pkg dassets -prefix assets -o dassets/assets.go assets/... README.md
+//go:generate bin/go-bindata -nometadata -prefix assets -o assets.go assets/... README.md
+//go:generate bin/go-bindata -nometadata -debug -pkg dassets -prefix assets -o dassets/assets.go assets/... README.md
 
 import (
 	"flag"

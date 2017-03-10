@@ -10,7 +10,7 @@ import (
 	"time"
 
 	consulclient "github.com/hashicorp/consul/api"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 var serviceIDs []string
