@@ -77,7 +77,6 @@ func main() {
 	}
 
 	for _, ss := range config.SlicerServices {
-		log.Printf("Found %+v Slicer service\n", *ss)
 		s, err := CreateService(ss.Executable)
 		if err != nil {
 			log.Fatalf("Error constructing Slicer CLI: %v", err)
