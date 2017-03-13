@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   </head>
   <body>
     {{ template "template/header.html" . }}
@@ -16,36 +17,95 @@
         <h1>{{.service.EndPoint}}</h1>
       </div>
       {{ $c := .config }}
-        {{ with .service }}
-        <div class="row">
-          <div class="col-sm-4">endpoint</div>
-          <div class="col-sm-8">{{.EndPoint}}</div>
-        </div>
+      {{ with .service }}
+      <div class="row">
+        <div class="col-sm-4">endpoint</div>
+        <div class="col-sm-8">{{.EndPoint}}</div>
+      </div>
 
-        <div class="row">
-          <div class="col-sm-4">command line</div>
-          <div class="col-sm-8">{{range .CommandLine}}{{.}} {{end}}</div>
-        </div>
-        
-        <div class="row">
-          <div class="col-sm-4">description</div>
-          <div class="col-sm-8">{{ markdown .Description }}</div>
-        </div>
+      <div class="row">
+        <div class="col-sm-4">command line</div>
+        <div class="col-sm-8">{{range .CommandLine}}{{.}} {{end}}</div>
+      </div>
+      
+      <div class="row">
+        <div class="col-sm-4">description</div>
+        <div class="col-sm-8">{{ markdown .Description }}</div>
+      </div>
 
-        <div class="row">
-          <h3>Calling with curl</h3>
-          {{ $d := .Defaults }}
-          <div class="well">
-            curl -X POST {{ range $p := .Parameters}} --form {{ $p }}="{{index $d $p}}"{{end}}
-            {{ range $p := .InputFiles }} --form {{$p}}=@FILENAME {{end}}
-            {{ range $p := .OutputFiles }} --form {{$p}}=output.FILENAME {{end}}
-            {{ range $p := .InputZip }} --form {{$p}}=@FILENAME.zip {{end}}
-            {{ range $p := .OutputZip }} --form {{$p}}=output.zip {{end}}
-            {{ $c.Server }}/rest/service/{{.EndPoint}}
+      <div class="row">
+        <h3>Calling with curl</h3>
+        {{ $d := .Defaults }}
+        <div class="well">
+          curl -X POST {{ range $p := .Parameters}} --form {{ $p }}="{{index $d $p}}"{{end}}
+          {{ range $p := .InputFiles }} --form {{$p}}=@FILENAME {{end}}
+          {{ range $p := .OutputFiles }} --form {{$p}}=output.FILENAME {{end}}
+          {{ range $p := .InputZip }} --form {{$p}}=@FILENAME.zip {{end}}
+          {{ range $p := .OutputZip }} --form {{$p}}=output.zip {{end}}
+          {{ $c.Server }}/rest/service/{{.EndPoint}}
         </div>
       </div>
+
+      <div class="row">
+        <form name="service" method="post" enctype="multipart/form-data">
+          {{ range $p := .Parameters}}
+          <div class="form-group">
+            <label for="{{$p}}">{{$p}}</label>
+            <input class="form-control" id="{{$p}}" placeholder="{{index $d $p}}" type="text" name="{{$p}}"> {{end}}
+          </div>
+          {{ range $p := .InputFiles }}
+          <div class="form-group">
+            <label for="{{$p}}">{{$p}}</label>
+            <input class="form-control" id="{{$p}}" type="file" name="{{$p}}">
+          </div>
+          {{end}}
+          {{ range $p := .OutputFiles }}
+          <div class="form-group">
+            <label for="{{$p}}">{{$p}}</label>
+            <input class="form-control" id="{{$p}}" type="text" name="{{$p}}">
+          </div>
+          {{end}}
+          {{ range $p := .InputZip }}
+          <div class="form-group">
+            <label for="{{$p}}">{{$p}}</label>
+            <input class="form-control" id="{{$p}}" type="file" name="{{$p}}">
+          </div>
+          {{end}}
+          {{ range $p := .OutputZip }}
+          <div class="form-group">
+            <label for="{{$p}}">{{$p}}</label>
+            <input class="form-control" id="{{$p}}" type="text" name="{{$p}}">
+          </div>
+          {{end}}
+          <p><button type="submit" class="btn btn-default">Submit</button>
+        </form>
+      </div>
       {{ end }}
-      
+      <div class="row" id="output-817310BD-42A6-4DC4-A45A-932EB5213E4E"/>
     </div>
+
+
+    <script type="text/javascript">
+
+    var form = document.forms.namedItem("service");
+    form.addEventListener('submit', function(ev) {
+
+      var oOutput = document.querySelector("#output-817310BD-42A6-4DC4-A45A-932EB5213E4E"),
+          oData = new FormData(form);
+      // Wait a full minute for timeout
+      axios.defaults.timeout = 60 * 1000;
+      axios.post("http://{{$c.Server}}/rest/service/{{.service.EndPoint}}", oData)
+           .then(function(response) {
+             console.log(response);
+             oOutput.innerHTML =
+               '<br/><a href="/job/' + response.data.uuid + '">Job status</a>' +
+               "<pre>" + JSON.stringify(response.data,null,4) + "</pre>";
+           })
+           .catch(function(error){
+             oOutput.innerHTML = "<h3>Error</h3><br/>" + error;
+           });
+      ev.preventDefault();
+    }, false);
+    </script>
   </body>
 </html>
