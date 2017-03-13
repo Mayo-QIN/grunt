@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -119,6 +120,20 @@ func (job *Job) ParseCommandLine(request *http.Request) error {
 			if err != nil {
 				return err
 			}
+
+			// If the directory has a single entry and it's a directory, do a quick shuffle
+			files, err := ioutil.ReadDir(dirName)
+			if err != nil {
+				return err
+			}
+			if len(files) == 1 && files[0].IsDir() {
+				// Shuffle
+				log.Printf("\tFound single directory, moving %v to %v", files[0].Name(), dirName)
+				os.Rename(filepath.Join(dirName, files[0].Name()), dirName+"-temp")
+				os.Remove(dirName)
+				os.Rename(dirName+"-temp", dirName)
+			}
+
 			log.Printf("\tExtracted zip file to %v (%s)", key, humanize.Bytes(uint64(count)))
 			cl = append(cl, filepath.Base(key))
 		} else if prefix == '~' {
