@@ -27,6 +27,9 @@ var funcs = template.FuncMap{
 	},
 	"humanizeTime": humanize.Time,
 	"now":          time.Now,
+	"markdown": func(s string) template.HTML {
+		return template.HTML(string(blackfriday.MarkdownCommon([]byte(s))))
+	},
 }
 
 var templates = template.New("").Funcs(funcs)

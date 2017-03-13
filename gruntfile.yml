@@ -6,7 +6,7 @@
 #                  #value  -- replace this argument with the parameter from the POST
 #                  <in     -- look for an uploaded file
 #                  >out    -- the process will generate this file for later download
-# description   -- description of the endpoint
+# description   -- description of the endpoint, rendered in Markdown
 # defaults      -- a hashmap of default values for "#value" parameters
 
 # this example configuration file exposes 2 endpoints, echo and copy
