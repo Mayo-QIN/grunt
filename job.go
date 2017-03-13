@@ -30,7 +30,7 @@ type Job struct {
 	Host              string            `json:"host"`
 	Port              int               `json:"port"`
 	Address           []string          `json:"address"`
-	Endpoint          string            `json:"endpoint"`
+	EndPoint          string            `json:"endpoint"`
 
 	// Registered channels
 	waiters []chan bool

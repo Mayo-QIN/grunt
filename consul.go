@@ -146,7 +146,7 @@ func registerConfigWithConsul(configD *ConfigD) {
 		numberOfJobs := 0
 		for _, job := range jobs {
 			for _, service := range configD.Services {
-				if job.Endpoint == service.EndPoint {
+				if job.EndPoint == service.EndPoint {
 					numberOfJobs++
 				}
 			}
