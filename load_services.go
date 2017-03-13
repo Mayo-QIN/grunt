@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type ConfigD struct {
@@ -17,7 +17,7 @@ type ConfigD struct {
 }
 
 func loadServices(configDirectory string) error {
-	filepath.Walk(configDirectory, func(gruntfile string, info os.FileInfo, err error) error {
+	return filepath.Walk(configDirectory, func(gruntfile string, info os.FileInfo, err error) error {
 		// Don't do anything with directories
 		if info.IsDir() {
 			return nil
@@ -45,15 +45,11 @@ func loadServices(configDirectory string) error {
 			if err != nil {
 				return fmt.Errorf("Error constructing Slicer CLI: %v", err)
 			}
-			configD.Services = append(configD.Services, s)
+			config.Services = append(config.Services, s)
 		}
-
-		// Advertise in Consul
-		registerConfigWithConsul(&configD)
-
-		// Append to existing service endpoints
-		config.Services = append(config.Services, configD.Services...)
+		for _, s := range configD.Services {
+			config.Services = append(config.Services, s)
+		}
 		return nil
 	})
-	return nil
 }

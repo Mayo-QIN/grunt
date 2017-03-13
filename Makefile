@@ -30,6 +30,11 @@ build: .GOPATH/.ok bindata
 	$Q go generate $(if $V,-v) $(VERSION_FLAGS) $(IMPORT_PATH)
 	$Q go install $(if $V,-v) $(VERSION_FLAGS) $(IMPORT_PATH)
 
+.PHONY: build-docker
+build-docker: .GOPATH/.ok bindata
+	$Q GOOS=linux GOARCH=amd64 go generate $(if $V,-v) $(VERSION_FLAGS) $(IMPORT_PATH)
+	$Q GOOS=linux GOARCH=amd64 go install $(if $V,-v) $(VERSION_FLAGS) $(IMPORT_PATH)
+
 ### Code not in the repository root? Another binary? Add to the path like this.
 # .PHONY: otherbin
 # otherbin: .GOPATH/.ok

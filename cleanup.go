@@ -22,7 +22,7 @@ func Email(job *Job) {
 
 	var templateData = map[string]interface{}{
 		"job":     job,
-		"service": config.ServiceMap[job.Endpoint],
+		"service": config.ServiceMap[job.EndPoint],
 		"to":      strings.Trim(fmt.Sprint(job.Address), "[]"),
 		"config":  config,
 	}
@@ -62,5 +62,5 @@ func Cleanup(job *Job) {
 		return
 	}
 	delete(jobs, job.UUID)
-	log.Printf("Cleanup done of %v (%v)", job.Endpoint, job.UUID)
+	log.Printf("Cleanup done of %v (%v)", job.EndPoint, job.UUID)
 }

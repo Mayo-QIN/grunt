@@ -12,8 +12,8 @@
     {{ template "template/header.html" . }}
 
     <div class="container">
-      <h1>Job detail as of {{ now }}</h1>
-
+      <h3>Job detail for <a href="/service/{{.job.EndPoint}}">{{.job.EndPoint}}</a> ({{.job.UUID}})</h3>
+      Generated {{ now }}
       {{ with .job }}
       <div class="row">
         <div class="col-sm-4">UUID</div>
@@ -42,6 +42,11 @@
             {{$uuid := .UUID}}
             <td><a href="/rest/job/{{$uuid}}/zip">Zip file of all inputs and outputs</a></td>
             {{range $key, $value := .FileMap}}
+            <tr>
+              <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
+            </tr>
+            {{end}}
+            {{range $key, $value := .ZipMap}}
             <tr>
               <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
             </tr>

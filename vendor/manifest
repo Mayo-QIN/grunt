@@ -114,6 +114,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/ventu-io/go-shortid",
+			"repository": "https://github.com/ventu-io/go-shortid",
+			"vcs": "git",
+			"revision": "935de6796a71e222e8a8a141ead882d70b6ba6d0",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/wadey/gocovmerge",
 			"repository": "https://github.com/wadey/gocovmerge",
 			"vcs": "git",

@@ -133,7 +133,7 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		CommandLine: service.CommandLine,
 		FileMap:     make(map[string]string),
 		ZipMap:      make(map[string]string),
-		Endpoint:    service.EndPoint,
+		EndPoint:    service.EndPoint,
 		Host:        advertisedHost,
 		Port:        advertisedPort,
 	}
@@ -260,7 +260,7 @@ func GetJobZip(w http.ResponseWriter, request *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Disposition", "attachment;filename="+job.Endpoint+"-"+job.UUID+".zip")
+	w.Header().Set("Content-Disposition", "attachment;filename="+job.EndPoint+"-"+job.UUID+".zip")
 	gz := zip.NewWriter(w)
 	defer gz.Close()
 
