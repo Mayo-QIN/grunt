@@ -42,11 +42,12 @@ type Config struct {
 var config Config
 var consulHost string
 var consulPort int
-var advertisedHost string
-var advertisedPort int
+var advertisedHost string = ""
+var advertisedPort int = 9901
 var debug bool
 
 func main() {
+	log.Printf("Starting grunt")
 	var port int
 	flag.IntVar(&port, "p", 9901, "specify port to use.  defaults to 9901.")
 	flag.StringVar(&consulHost, "consul", "", "specify Consul host. defaults to none. Also set by CONSUL_HOST or CONSULT_PORT_8500_TCP_ADDR environment variable")

@@ -119,7 +119,7 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, "service not found", http.StatusNotFound)
 		return
 	}
-	log.Printf("Found service %v:%v", vars["id"], service)
+	log.Printf("Found service %v on endpoint %v", vars["id"], service.EndPoint)
 	// Pull out our arguments
 	err := request.ParseMultipartForm(10 * 1024 * 1024)
 	if err != nil {
@@ -136,6 +136,7 @@ func StartService(w http.ResponseWriter, request *http.Request) {
 		EndPoint:    service.EndPoint,
 		Host:        advertisedHost,
 		Port:        advertisedPort,
+		Address:     make([]string, 0),
 	}
 
 	// do we have an email address?
