@@ -39,19 +39,20 @@
         </thead>
         <tbody>
           <tr>
-            
-            {{$uuid := .UUID}}
-            <td><a href="/rest/job/{{$uuid}}/zip">Zip file of all inputs and outputs</a></td>
-            {{range $key, $value := .FileMap}}
-            <tr>
-              <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
-            </tr>
-            {{end}}
-            {{range $key, $value := .ZipMap}}
-            <tr>
-              <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</a></td>
-            </tr>
-            {{end}}
+            <td><a href="/rest/job/{{.UUID}}">JSON status</a></td>
+          </tr>
+          {{$uuid := .UUID}}
+          <tr><td><a href="/rest/job/{{$uuid}}/zip">Zip file of all inputs and outputs</a></td></tr>
+          {{range $key, $value := .FileMap}}
+          <tr>
+            <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
+          </tr>
+          {{end}}
+          {{range $key, $value := .ZipMap}}
+          <tr>
+            <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</a></td>
+          </tr>
+          {{end}}
         </tbody>
       </table>
       </div>
@@ -65,7 +66,7 @@
           </thead>
           <tbody>
             <tr>
-              <th><pre style="background-color: transparent; border: 0px;padding: 0px">{{.OutputString}}</pre></th>
+              <th><pre style="background-color: transparent; border: 0px;padding: 0px">{{.Output.String}}</pre></th>
             </tr>
           </tbody>
         </table>
