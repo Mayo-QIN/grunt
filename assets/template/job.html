@@ -30,6 +30,7 @@
         <div class="col-sm-8">{{range .ParsedCommandLine}}{{.}} {{end}}</div>
       </div>
 
+      <div class="row">
       <table class="table table-striped">
         <thead>
           <tr>
@@ -48,16 +49,26 @@
             {{end}}
             {{range $key, $value := .ZipMap}}
             <tr>
-              <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
+              <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</a></td>
             </tr>
             {{end}}
         </tbody>
       </table>
-      <div class="panel panel-default">
-        <div class="panel-heading">Log</div>
-        <div class="panel-body">
-          <pre>{{.OutputString}}</pre>
-        </div>
+      </div>
+      
+      <div class="row">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Log</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th><pre style="background-color: transparent; border: 0px;padding: 0px">{{.OutputString}}</pre></th>
+            </tr>
+          </tbody>
+        </table>
       </div>
       
       {{end}}      
