@@ -12,12 +12,12 @@
   <body>
     {{ template "template/header.html" . }}
 
+    {{ $c := .config }}
+    {{ with .service }}
     <div class="container">
       <div class="row">
-        <h1>{{.service.EndPoint}}</h1>
+        <h1>{{.EndPoint}}</h1>
       </div>
-      {{ $c := .config }}
-      {{ with .service }}
       <div class="row">
         <div class="col-sm-4">endpoint</div>
         <div class="col-sm-8">{{.EndPoint}}</div>
@@ -34,7 +34,7 @@
       </div>
 
       <div class="row">
-        <h3>Calling with curl</h3>
+        <h3>Start service with <code>curl</code></h3>
         {{ $d := .Defaults }}
         <div class="well">
           curl -X POST {{ range $p := .Parameters}} --form {{ $p }}="{{index $d $p}}"{{end}}
@@ -47,43 +47,95 @@
       </div>
 
       <div class="row">
+        <h3>Start service interactively</h3>
         <form name="service" method="post" enctype="multipart/form-data">
-          {{ range $p := .Parameters}}
-          <div class="form-group">
-            <label for="{{$p}}">{{$p}}</label>
-            <input class="form-control" id="{{$p}}" placeholder="{{index $d $p}}" type="text" name="{{$p}}"> {{end}}
-          </div>
-          {{ range $p := .InputFiles }}
-          <div class="form-group">
-            <label for="{{$p}}">{{$p}}</label>
-            <input class="form-control" id="{{$p}}" type="file" name="{{$p}}">
-          </div>
-          {{end}}
-          {{ range $p := .OutputFiles }}
-          <div class="form-group">
-            <label for="{{$p}}">{{$p}}</label>
-            <input class="form-control" id="{{$p}}" type="text" name="{{$p}}">
-          </div>
-          {{end}}
-          {{ range $p := .InputZip }}
-          <div class="form-group">
-            <label for="{{$p}}">{{$p}}</label>
-            <input class="form-control" id="{{$p}}" type="file" name="{{$p}}">
+          
+          {{ if .Parameters }}
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              Command line parameters for <code>{{.EndPoint}}</code>.  Typically these are strings or numbers.
+            </div>
+            <div class="panel-body">
+              {{ range $p := .Parameters}}
+              <div class="form-group">
+                <label for="{{$p}}">{{$p}}</label>
+                <input class="form-control" id="{{$p}}" placeholder="{{index $d $p}}" type="text" name="{{$p}}">
+              </div>
+              {{end}}
+            </div>
           </div>
           {{end}}
-          {{ range $p := .OutputZip }}
-          <div class="form-group">
-            <label for="{{$p}}">{{$p}}</label>
-            <input class="form-control" id="{{$p}}" type="text" name="{{$p}}">
+
+          {{ if .InputFiles }}
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              Files needed to for <code>{{ .EndPoint }}</code>.  These are individual files (not zip files).
+            </div>
+            <div class="panel-body">
+              {{ range $p := .InputFiles }}
+              <div class="form-group">
+                <label for="{{$p}}">{{$p}}</label>
+                <input class="form-control" id="{{$p}}" type="file" name="{{$p}}">
+              </div>
+              {{end}}
+            </div>
           </div>
           {{end}}
+
+          {{ if .InputZip }}
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              Zip files containing directories needed to for <code>{{ .EndPoint }}</code>.  Typically, these are zip files containing a single directory.  Grunt expands the zip file to create an input directory for <code>{{.EndPoint}}</code>.
+            </div>
+            <div class="panel-body">
+              {{ range $p := .InputZip }}
+              <div class="form-group">
+                <label for="{{$p}}">{{$p}}</label>
+                <input class="form-control" id="{{$p}}" type="file" name="{{$p}}">
+              </div>
+              {{end}}
+            </div>
+          </div>
+          {{end}}
+          
+          {{ if .OutputFiles }}
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              File name for files created by <code>{{ .EndPoint }}</code>.  These are individual files (not zip files) and should reflect any extensions that are important to the service.
+            </div>
+            <div class="panel-body">
+              {{ range $p := .OutputFiles }}
+              <div class="form-group">
+                <label for="{{$p}}">{{$p}}</label>
+                <input class="form-control" id="{{$p}}" type="text" name="{{$p}}">
+              </div>
+              {{end}}
+            </div>
+          </div>
+          {{end}}
+
+          {{ if .OutputZip }}
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              Name of a directory created by <code>{{.EndPoint}}</code>.  The output will be a Zip file of contining a directory of files produced by <code>{{ .EndPoint }}</code>.  These zip files contain a single directory containing output of {{.EndPoint}}.
+            </div>
+            <div class="panel-body">
+              {{ range $p := .OutputZip }}
+              <div class="form-group">
+                <label for="{{$p}}">{{$p}}</label>
+                <input class="form-control" id="{{$p}}" type="text" name="{{$p}}">
+              </div>
+              {{end}}
+            </div>
+          </div>
+          {{ end }}
+
           <p><button type="submit" class="btn btn-default">Submit</button>
         </form>
       </div>
-      {{ end }}
       <div class="row" id="output-817310BD-42A6-4DC4-A45A-932EB5213E4E"/>
     </div>
-
+    {{end}}
 
     <script type="text/javascript">
 
@@ -98,12 +150,14 @@
            .then(function(response) {
              console.log(response);
              oOutput.innerHTML =
-               '<br/><a href="/job/' + response.data.uuid + '">Job status</a>' +
+               '<br/><div class="alert alert-success">Service started see <a href="/job/' + response.data.uuid + '">job status</a></div>' +
                "<pre>" + JSON.stringify(response.data,null,4) + "</pre>";
            })
-           .catch(function(error){
-             oOutput.innerHTML = "<h3>Error</h3><br/>" + error;
-           });
+      .catch(function(error){
+      oOutput.innerHTML = "<h3>Error</h3><br/>" +
+      '<div class="alert alert-info">' +
+      error + '</div><div class="alert alert-warning">' + error.response.data + '</div>'
+      });
       ev.preventDefault();
     }, false);
     </script>
