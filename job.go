@@ -43,6 +43,7 @@ type Job struct {
 }
 
 // Custom JSON output
+// see http://choly.ca/post/go-json-marshalling/
 func (job *Job) MarshalJSON() ([]byte, error) {
 	type Alias Job
 	return json.Marshal(&struct {
