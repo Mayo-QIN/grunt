@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -30,16 +31,28 @@ type Job struct {
 	Status            string            `json:"status"`
 	Host              string            `json:"host"`
 	Port              int               `json:"port"`
-	Address           []string          `json:"address"`
+	Address           []string          `json:"notification_email_address"`
 	EndPoint          string            `json:"endpoint"`
 
 	// Registered channels
 	waiters []chan bool
 
 	// Running process, NB: the Cmd is started in the Job's WorkingDirectory
-	cmd          *exec.Cmd
-	Output       bytes.Buffer `json:"-"`
-	OutputString string       `json:"output"`
+	cmd    *exec.Cmd
+	Output bytes.Buffer `json:"-"`
+}
+
+// Custom JSON output
+// see http://choly.ca/post/go-json-marshalling/
+func (job *Job) MarshalJSON() ([]byte, error) {
+	type Alias Job
+	return json.Marshal(&struct {
+		TempString string `json:"output"`
+		*Alias
+	}{
+		TempString: job.Output.String(),
+		Alias:      (*Alias)(job),
+	})
 }
 
 // Parse the commandline from the HTTP request
@@ -187,8 +200,6 @@ func (job *Job) Start() {
 		jobMutex.Unlock()
 		// Notify waiters
 		log.Printf("%v (%v) completed with status %v", job.Service.EndPoint, job.UUID, job.Status)
-		job.OutputString = job.Output.String()
-		job.Output.Truncate(0)
 		for _, c := range job.waiters {
 			c <- true
 		}
