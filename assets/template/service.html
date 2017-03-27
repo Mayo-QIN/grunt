@@ -36,16 +36,23 @@
       <div class="row">
         <h3>Start service with <code>curl</code></h3>
         {{ $d := .Defaults }}
-        <div class="well">
-          curl -X POST {{ range $p := .Parameters}} --form {{ $p }}="{{index $d $p}}"{{end}}
-          {{ range $p := .InputFiles }} --form {{$p}}=@FILENAME {{end}}
-          {{ range $p := .OutputFiles }} --form {{$p}}=output.FILENAME {{end}}
-          {{ range $p := .InputZip }} --form {{$p}}=@FILENAME.zip {{end}}
-          {{ range $p := .OutputZip }} --form {{$p}}=output.zip {{end}}
-          {{ $c.Server }}/rest/service/{{.EndPoint}}
+        <div class="well" id="curl-command">
         </div>
       </div>
 
+      <script type="text/javascript">
+        
+        var t = document.getElementById('curl-command');
+        t.innerHTML = "curl -X POST {{ range $p := .Parameters}} --form {{ $p }}=\"{{index $d $p}}\"{{end}}" +
+        "{{ range $p := .InputFiles }} --form {{$p}}=@FILENAME {{end}}" +
+        "{{ range $p := .OutputFiles }} --form {{$p}}=output.FILENAME {{end}}" +
+        "{{ range $p := .InputZip }} --form {{$p}}=@FILENAME.zip {{end}}" + 
+        "{{ range $p := .OutputZip }} --form {{$p}}=output.zip {{end}}" +
+      " " + window.location.hostname + ":" + window.location.port + "/rest/service/{{.EndPoint}}";
+
+      </script>
+
+      
       <div class="row">
         <h3>Start service interactively</h3>
         <form name="service" method="post" enctype="multipart/form-data">
@@ -138,7 +145,7 @@
     {{end}}
 
     <script type="text/javascript">
-
+    
     var form = document.forms.namedItem("service");
     form.addEventListener('submit', function(ev) {
 
@@ -146,18 +153,18 @@
           oData = new FormData(form);
       // Wait a full minute for timeout
       axios.defaults.timeout = 60 * 1000;
-      axios.post("http://{{$c.Server}}/rest/service/{{.service.EndPoint}}", oData)
+      axios.post("/rest/service/{{.service.EndPoint}}", oData)
            .then(function(response) {
              console.log(response);
              oOutput.innerHTML =
                '<br/><div class="alert alert-success">Service started see <a href="/job/' + response.data.uuid + '">job status</a></div>' +
                "<pre>" + JSON.stringify(response.data,null,4) + "</pre>";
            })
-      .catch(function(error){
-      oOutput.innerHTML = "<h3>Error</h3><br/>" +
-      '<div class="alert alert-info">' +
-      error + '</div><div class="alert alert-warning">' + error.response.data + '</div>'
-      });
+           .catch(function(error){
+             oOutput.innerHTML = "<h3>Error</h3><br/>" +
+                                 '<div class="alert alert-info">' +
+                                 error + '</div><div class="alert alert-warning">' + error.response.data + '</div>'
+           });
       ev.preventDefault();
     }, false);
     </script>
