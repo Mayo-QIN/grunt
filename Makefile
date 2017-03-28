@@ -30,6 +30,10 @@ build: .GOPATH/.ok bindata
 	$Q go generate $(if $V,-v) $(VERSION_FLAGS) $(IMPORT_PATH)
 	$Q go install $(if $V,-v) $(VERSION_FLAGS) $(IMPORT_PATH)
 
+.PHONY: list_imports
+list_imports: .GOPATH/.ok
+	$Q go list -f '{{ join .Deps "\n" }}' $(IMPORT_PATH)
+
 .PHONY: build-docker
 build-docker: .GOPATH/.ok bindata
 	$Q GOOS=linux GOARCH=amd64 go generate $(if $V,-v) $(VERSION_FLAGS) $(IMPORT_PATH)

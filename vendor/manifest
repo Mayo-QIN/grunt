@@ -2,38 +2,6 @@
 	"version": 0,
 	"dependencies": [
 		{
-			"importpath": "github.com/BurntSushi/toml",
-			"repository": "https://github.com/BurntSushi/toml",
-			"vcs": "git",
-			"revision": "e643e9ef00b049d75de26e61109c5ea01885cd21",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/Sirupsen/logrus",
-			"repository": "https://github.com/Sirupsen/logrus",
-			"vcs": "git",
-			"revision": "1deb2db2a6fff8a35532079061b903c3a25eed52",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/codegangsta/cli",
-			"repository": "https://github.com/codegangsta/cli",
-			"vcs": "git",
-			"revision": "9e5b04886c4bfee2ceba1465b8121057355c4e53",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/davecgh/go-spew",
-			"repository": "https://github.com/davecgh/go-spew",
-			"vcs": "git",
-			"revision": "346938d642f2ec3594ed81d874461961cd0faa76",
-			"branch": "master",
-			"notests": true
-		},
-		{
 			"importpath": "github.com/dustin/go-humanize",
 			"repository": "https://github.com/dustin/go-humanize",
 			"vcs": "git",
@@ -66,26 +34,37 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/hashicorp/consul",
+			"importpath": "github.com/hashicorp/consul/api",
 			"repository": "https://github.com/hashicorp/consul",
 			"vcs": "git",
-			"revision": "22986fbfe899698b534861a012c50ce128c2b713",
+			"revision": "6508b3816069cee0a09ca42e2e7f909beaa774b3",
 			"branch": "master",
+			"path": "/api",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/hashicorp/consul/vendor/github.com/hashicorp/go-cleanhttp",
+			"repository": "https://github.com/hashicorp/consul",
+			"vcs": "git",
+			"revision": "6508b3816069cee0a09ca42e2e7f909beaa774b3",
+			"branch": "master",
+			"path": "vendor/github.com/hashicorp/go-cleanhttp",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/hashicorp/consul/vendor/github.com/hashicorp/serf/coordinate",
+			"repository": "https://github.com/hashicorp/consul",
+			"vcs": "git",
+			"revision": "6508b3816069cee0a09ca42e2e7f909beaa774b3",
+			"branch": "master",
+			"path": "vendor/github.com/hashicorp/serf/coordinate",
 			"notests": true
 		},
 		{
 			"importpath": "github.com/imdario/mergo",
 			"repository": "https://github.com/imdario/mergo",
 			"vcs": "git",
-			"revision": "50d4dbd4eb0e84778abe37cefef140271d96fade",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/jteeuwen/go-bindata",
-			"repository": "https://github.com/jteeuwen/go-bindata",
-			"vcs": "git",
-			"revision": "a0ff2567cfb70903282db057e799fd826784d41d",
+			"revision": "d806ba8c21777d504a2090a2ca4913c750dd3a33",
 			"branch": "master",
 			"notests": true
 		},
@@ -101,7 +80,7 @@
 			"importpath": "github.com/satori/go.uuid",
 			"repository": "https://github.com/satori/go.uuid",
 			"vcs": "git",
-			"revision": "b061729afc07e77a8aa4fad0a2fd840958f1942a",
+			"revision": "5bf94b69c6b68ee1b541973bb8e1144db23a194b",
 			"branch": "master",
 			"notests": true
 		},
@@ -110,116 +89,6 @@
 			"repository": "https://github.com/shurcooL/sanitized_anchor_name",
 			"vcs": "git",
 			"revision": "1dba4b3954bc059efc3991ec364f9f9a35f597d2",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/ventu-io/go-shortid",
-			"repository": "https://github.com/ventu-io/go-shortid",
-			"vcs": "git",
-			"revision": "935de6796a71e222e8a8a141ead882d70b6ba6d0",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/wadey/gocovmerge",
-			"repository": "https://github.com/wadey/gocovmerge",
-			"vcs": "git",
-			"revision": "b5bfa59ec0adc420475f97f89b58045c721d761c",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "golang.org/x/net/context",
-			"repository": "https://go.googlesource.com/net",
-			"vcs": "git",
-			"revision": "a6577fac2d73be281a500b310739095313165611",
-			"branch": "master",
-			"path": "/context",
-			"notests": true
-		},
-		{
-			"importpath": "golang.org/x/sys/unix",
-			"repository": "https://go.googlesource.com/sys",
-			"vcs": "git",
-			"revision": "99f16d856c9836c42d24e7ab64ea72916925fa97",
-			"branch": "master",
-			"path": "/unix",
-			"notests": true
-		},
-		{
-			"importpath": "golang.org/x/tools/cmd/goimports",
-			"repository": "https://go.googlesource.com/tools",
-			"vcs": "git",
-			"revision": "f60b69ed8cd7a29e91f87050ae23a29581a0f367",
-			"branch": "master",
-			"path": "/cmd/goimports",
-			"notests": true
-		},
-		{
-			"importpath": "golang.org/x/tools/cover",
-			"repository": "https://go.googlesource.com/tools",
-			"vcs": "git",
-			"revision": "f60b69ed8cd7a29e91f87050ae23a29581a0f367",
-			"branch": "master",
-			"path": "/cover",
-			"notests": true
-		},
-		{
-			"importpath": "golang.org/x/tools/go/ast/astutil",
-			"repository": "https://go.googlesource.com/tools",
-			"vcs": "git",
-			"revision": "f60b69ed8cd7a29e91f87050ae23a29581a0f367",
-			"branch": "master",
-			"path": "go/ast/astutil",
-			"notests": true
-		},
-		{
-			"importpath": "golang.org/x/tools/imports",
-			"repository": "https://go.googlesource.com/tools",
-			"vcs": "git",
-			"revision": "f60b69ed8cd7a29e91f87050ae23a29581a0f367",
-			"branch": "master",
-			"path": "imports",
-			"notests": true
-		},
-		{
-			"importpath": "gopkg.in/airbrake/gobrake.v2",
-			"repository": "https://gopkg.in/airbrake/gobrake.v2",
-			"vcs": "git",
-			"revision": "668876711219e8b0206e2994bf0a59d889c775aa",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "gopkg.in/gemnasium/logrus-airbrake-hook.v2",
-			"repository": "https://gopkg.in/gemnasium/logrus-airbrake-hook.v2",
-			"vcs": "git",
-			"revision": "bfee1239d796830ca346767650cce5ba90d58c57",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "gopkg.in/mgo.v2",
-			"repository": "https://gopkg.in/mgo.v2",
-			"vcs": "git",
-			"revision": "3f83fa5005286a7fe593b055f0d7771a7dce4655",
-			"branch": "v2",
-			"notests": true
-		},
-		{
-			"importpath": "gopkg.in/tomb.v2",
-			"repository": "https://gopkg.in/tomb.v2",
-			"vcs": "git",
-			"revision": "d5d1b5820637886def9eef33e03a27a9f166942c",
-			"branch": "v2",
-			"notests": true
-		},
-		{
-			"importpath": "gopkg.in/urfave/cli.v1",
-			"repository": "https://gopkg.in/urfave/cli.v1",
-			"vcs": "git",
-			"revision": "0bdeddeeb0f650497d603c4ad7b20cfe685682f6",
 			"branch": "master",
 			"notests": true
 		},

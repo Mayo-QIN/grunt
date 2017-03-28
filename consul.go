@@ -10,7 +10,7 @@ import (
 	"time"
 
 	consulclient "github.com/hashicorp/consul/api"
-	shortid "github.com/ventu-io/go-shortid"
+	uuid "github.com/satori/go.uuid"
 )
 
 var serviceIDs []string
@@ -110,11 +110,9 @@ func registerConfigWithConsul(configD *ConfigD) {
 	if name == "" {
 		name = "grunt"
 	}
-	abcs := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ=-"
-	idgen := shortid.MustNew(0, abcs, 1)
 
 	service := consulclient.AgentServiceRegistration{
-		ID:      "grunt-" + idgen.MustGenerate(),
+		ID:      "grunt-" + uuid.NewV4().String(),
 		Name:    name,
 		Tags:    tags,
 		Port:    advertisedPort,

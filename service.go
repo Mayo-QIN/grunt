@@ -36,6 +36,7 @@ type Service struct {
 	OutputFiles       []string          `json:"output_files"`
 	InputZip          []string          `json:"input_directories"`
 	OutputZip         []string          `json:"output_directories"`
+	isSetup           bool
 }
 
 // Parse our argements
@@ -50,6 +51,9 @@ func NewService() *Service {
 }
 
 func (service *Service) setup() *Service {
+	if service.isSetup {
+		return service
+	}
 	if service.Defaults == nil {
 		service.Defaults = make(map[string]string)
 	}
@@ -72,10 +76,12 @@ func (service *Service) setup() *Service {
 		service.OutputZip = make([]string, 0)
 	}
 	for _, arg := range service.CommandLine {
-		// Do we start with an #?
+		// Do we start with an # or other prefix?  If so, add to proper
+		// structure and argument list
 		key := arg[1:]
 		prefix := arg[0]
 		isArg := false
+
 		if prefix == '#' {
 			isArg = true
 			service.Parameters = append(service.Arguments, key)
@@ -96,6 +102,7 @@ func (service *Service) setup() *Service {
 			service.Arguments = append(service.Arguments, key)
 		}
 	}
+	service.isSetup = true
 	return service
 }
 
