@@ -84,7 +84,7 @@ func (service *Service) setup() *Service {
 
 		if prefix == '#' {
 			isArg = true
-			service.Parameters = append(service.Arguments, key)
+			service.Parameters = append(service.Parameters, key)
 		} else if prefix == '<' {
 			isArg = true
 			service.InputFiles = append(service.InputFiles, key)

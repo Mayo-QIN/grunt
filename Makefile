@@ -17,6 +17,7 @@ Makefile for grunt
 
   all          - make everything
   test         - run tests
+  build-docker - build a linux version for a docker
 
 endef
 export help
