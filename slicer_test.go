@@ -27,14 +27,14 @@ func TestParseService(t *testing.T) {
 		if err != nil {
 			t.Errorf("failed to parse %v", err.Error())
 		}
-		if len(s.CommandLine) != tt.parameter_count {
-			t.Errorf("unexpected commandline length expected: %v actual: %v -- %v", tt.parameter_count, len(s.CommandLine), s.CommandLine)
+		if len(s.Parameters) != tt.parameter_count {
+			t.Errorf("%v unexpected commandline length expected: %v actual: %v -- %v", tt.executable, tt.parameter_count, len(s.Parameters), s.Parameters)
 		}
 		if len(s.OutputFiles) != tt.output_file_count {
-			t.Errorf("unexpected output file length expected: %v actual: %v -- %v", tt.output_file_count, len(s.OutputFiles), s.OutputFiles)
+			t.Errorf("%v unexpected output file length expected: %v actual: %v -- %v", tt.executable, tt.output_file_count, len(s.OutputFiles), s.OutputFiles)
 		}
 		if len(s.InputFiles) != tt.input_file_count {
-			t.Errorf("unexpected input file length expected: %v actual: %v -- %v", tt.input_file_count, len(s.InputFiles), s.InputFiles)
+			t.Errorf("%v unexpected input file length expected: %v actual: %v -- %v", tt.executable, tt.input_file_count, len(s.InputFiles), s.InputFiles)
 		}
 	}
 }
@@ -47,9 +47,11 @@ var serviceTests = []struct {
 	output_file_count int
 	xml               string
 }{
-	{"Anisotropic Diffusion", "AnisotropicDiffusion", 9, 1, 1, ADXML},
-	{"Gradient Anisotropic Diffusion", "GradientAnisotropicDiffusion", 11, 1, 1, GADXML},
-	{"Tour", "ExecutionModelTour", 31, 2, 4, TourXML},
+	{"Anisotropic Diffusion", "AnisotropicDiffusion", 3, 1, 1, ADXML},
+	{"Gradient Anisotropic Diffusion", "GradientAnisotropicDiffusion", 4, 1, 1, GADXML},
+	{"Tour", "ExecutionModelTour", 10, 2, 4, TourXML},
+	// NB: this is an error, the segimage2itkimage has a bug!  The OutputDirName should be an "output" channel
+	{"Seg Image 2 ITK Image", "segimage2itkimage", 2, 2, 0, segimage2itkimageXML},
 }
 
 // These XML strings are from the Slicer CLI modules and website examples.
@@ -489,4 +491,61 @@ var TourXML = `<?xml version="1.0" encoding="utf-8"?>
   </parameters>
 </executable>
 
+`
+var segimage2itkimageXML = `<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Informatics</category>
+  <title>Convert DICOM SEG into ITK image</title>
+  <description>This tool can be used to convert DICOM Segmentation into volumetric segmentations stored as labeled pixels using research format, such as NRRD or NIfTI, and meta information stored in the JSON file format.</description>
+  <version>1.0</version>
+  <documentation-url>https://github.com/QIICR/dcmqi</documentation-url>
+  <license></license>
+  <contributor>Andrey Fedorov(BWH), Christian Herz(BWH)</contributor>
+  <acknowledgements>This work is supported in part the National Institutes of Health, National Cancer Institute, Informatics Technology for Cancer Research (ITCR) program, grant Quantitative Image Informatics for Cancer Research (QIICR) (U24 CA180918, PIs Kikinis and Fedorov).</acknowledgements>
+
+  <parameters>
+    <file>
+      <name>inputSEGFileName</name>
+      <label>SEG file name</label>
+      <channel>input</channel>
+      <longflag>inputDICOM</longflag>
+      <description>File name of the input DICOM Segmentation image object.</description>
+    </file>
+
+    <file>
+      <name>outputDirName</name>
+      <label>Output directory name</label>
+      <channel>input</channel>
+      <longflag>outputDirectory</longflag>
+      <description>Directory to store individual segments saved using the output format specified files. When specified, file names will contain prefix, followed by the segment number.</description>
+    </file>
+
+    <string>
+      <name>prefix</name>
+      <label>Output prefix</label>
+      <flag>p</flag>
+      <longflag>prefix</longflag>
+      <description>Prefix for output file.</description>
+      <default></default>
+    </string>
+
+    <string-enumeration>
+      <name>outputType</name>
+      <flag>t</flag>
+      <longflag>outputType</longflag>
+      <description>Output file format for the resulting image data.</description>
+      <label>Output type</label>
+      <default>nrrd</default>
+      <element>nrrd</element>
+      <element>mhd</element>
+      <element>mha</element>
+      <element>nii</element>
+      <element>nifti</element>
+      <element>hdr</element>
+      <element>img</element>
+    </string-enumeration>
+
+  </parameters>
+
+</executable>
 `
