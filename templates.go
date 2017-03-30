@@ -63,6 +63,7 @@ func Template(name string, data map[string]interface{}, w http.ResponseWriter, r
 		"serviceMap": config.ServiceMap,
 		"help":       helpText,
 		"vars":       mux.Vars(request),
+		"version":    VersionInfo,
 	}
 
 	// merge in our extra data

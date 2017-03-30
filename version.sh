@@ -12,7 +12,7 @@ var VersionInfo = struct {
 	Version     string
 	FullVersion string
 	Hash        string
-	HashShort   string
+	ShortHash   string
 	Date        string
 }{
   "$VERSION",

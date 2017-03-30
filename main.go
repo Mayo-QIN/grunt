@@ -49,10 +49,11 @@ var debug bool
 
 func main() {
 	log.Printf("Starting grunt")
-	log.Printf("\tVersion: %v", VersionInfo.Version)
+	log.Printf("\tVersion:      %v", VersionInfo.Version)
+	log.Printf("\tFull:         %v", VersionInfo.FullVersion)
 	log.Printf("\tVersion Date: %v", VersionInfo.Date)
-	log.Printf("\tHash: %v", VersionInfo.Hash)
-	log.Printf("\tShort Hash: %v", VersionInfo.HashShort)
+	log.Printf("\tHash:         %v", VersionInfo.Hash)
+	log.Printf("\tShort Hash:   %v", VersionInfo.ShortHash)
 	var port int
 	flag.IntVar(&port, "p", 9901, "specify port to use.  defaults to 9901.")
 	flag.StringVar(&consulHost, "consul", "", "specify Consul host. defaults to none. Also set by CONSUL_HOST or CONSULT_PORT_8500_TCP_ADDR environment variable")
