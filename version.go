@@ -7,10 +7,10 @@ var VersionInfo = struct {
 	ShortHash   string
 	Date        string
 }{
-  "1.0.0",
-  "1.0.0-5-g7d7e9a9",
-  "7d7e9a9080527fe5e7da0cdfa2c1a46653aee6ae",
-  "7d7e9a9",
-  "2017-03-30-1626 UTC",
+  "1.0.1",
+  "1.0.1",
+  "496d9e17a5851b3dda46d2c773c68c5709809b42",
+  "496d9e1",
+  "2017-03-30-1628 UTC",
 }
 
