@@ -1,16 +1,25 @@
 #!/bin/sh
 
-VERSION=$(git describe --tags --always --dirty)
+VERSION=$(git describe --tags --always --abbrev=0)
+VERSIONFULL=$(git describe --tags --always)
 DATE=$(date -u '+%Y-%m-%d-%H%M UTC')
 HASH=$(git rev-parse --verify HEAD)
 HASH_SHORT=$(git rev-parse --verify --short HEAD)
 cat <<EOF > version.go
-
 package main
 
-var version = "$VERSION"
-var version_hash = "$HASH"
-var version_hash_short = "$HASH_SHORT"
-var version_date = "$DATE"
+var VersionInfo = struct {
+	Version     string
+	FullVersion string
+	Hash        string
+	HashShort   string
+	Date        string
+}{
+  "$VERSION",
+  "$VERSIONFULL",
+  "$HASH",
+  "$HASH_SHORT",
+  "$DATE",
+}
 
 EOF
