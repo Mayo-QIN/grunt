@@ -56,7 +56,7 @@
       <div class="row">
         <h3>Start service interactively</h3>
         <form name="service" method="post" enctype="multipart/form-data">
-          
+          {{$parameter_descriptions := .ParameterDescriptions}}
           {{ if .Parameters }}
           <div class="panel panel-default">
             <div class="panel-heading">
@@ -65,7 +65,7 @@
             <div class="panel-body">
               {{ range $p := .Parameters}}
               <div class="form-group">
-                <label for="{{$p}}">{{$p}}</label>
+                <label for="{{$p}}">{{$p}} <span class="text-muted">{{ index $parameter_descriptions $p | markdown }}</span></label>
                 <input class="form-control" id="{{$p}}" placeholder="{{index $d $p}}" type="text" name="{{$p}}">
               </div>
               {{end}}
@@ -81,7 +81,7 @@
             <div class="panel-body">
               {{ range $p := .InputFiles }}
               <div class="form-group">
-                <label for="{{$p}}">{{$p}}</label>
+                <label for="{{$p}}">{{$p}} <span class="text-muted">{{index $parameter_descriptions $p | markdown }}</span></label>
                 <input class="form-control" id="{{$p}}" type="file" name="{{$p}}">
               </div>
               {{end}}
@@ -97,7 +97,7 @@
             <div class="panel-body">
               {{ range $p := .InputZip }}
               <div class="form-group">
-                <label for="{{$p}}">{{$p}}</label>
+                <label for="{{$p}}">{{$p}} <span class="text-muted">{{index $parameter_descriptions $p | markdown }}</span></label>
                 <input class="form-control" id="{{$p}}" type="file" name="{{$p}}">
               </div>
               {{end}}
@@ -113,7 +113,7 @@
             <div class="panel-body">
               {{ range $p := .OutputFiles }}
               <div class="form-group">
-                <label for="{{$p}}">{{$p}}</label>
+                <label for="{{$p}}">{{$p}} <span class="text-muted">{{index $parameter_descriptions $p | markdown }}</span></label>
                 <input class="form-control" id="{{$p}}" type="text" name="{{$p}}">
               </div>
               {{end}}
@@ -129,7 +129,7 @@
             <div class="panel-body">
               {{ range $p := .OutputZip }}
               <div class="form-group">
-                <label for="{{$p}}">{{$p}}</label>
+                <label for="{{$p}}">{{$p}} <span class="text-muted">{{index $parameter_descriptions $p | markdown }}</span></label>
                 <input class="form-control" id="{{$p}}" type="text" name="{{$p}}">
               </div>
               {{end}}
@@ -153,6 +153,8 @@
           oData = new FormData(form);
       // Wait a full minute for timeout
       axios.defaults.timeout = 60 * 1000;
+      oOutput.innerHTML = '<br/><div class="alert alert-success">Starting service, please wait for upload...</div>';
+      
       axios.post("/rest/service/{{.service.EndPoint}}", oData)
            .then(function(response) {
              console.log(response);
@@ -164,8 +166,8 @@
              oOutput.innerHTML = "<h3>Error</h3><br/>" +
                                  '<div class="alert alert-info">' +
                                  error + '</div><div class="alert alert-warning">' + error.response.data + '</div>'
-           });
-      ev.preventDefault();
+    });
+    ev.preventDefault();
     }, false);
     </script>
   </body>
