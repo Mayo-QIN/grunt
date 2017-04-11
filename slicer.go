@@ -102,6 +102,9 @@ func CreateServiceFromXML(path string, out string) (*Service, error) {
 				if p.Default != "" {
 					service.Defaults[p.Name] = p.Default
 				}
+				if p.Description != "" {
+					service.ParameterDescriptions[p.Name] = p.Description
+				}
 				service.CommandLine = append(service.CommandLine, f, n)
 			}
 		}

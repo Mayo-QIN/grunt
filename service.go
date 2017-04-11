@@ -25,18 +25,19 @@ type SlicerService struct {
 }
 
 type Service struct {
-	EndPoint          string            `yaml:"endPoint" json:"end_point"`
-	CommandLine       []string          `yaml:"commandLine" json:"command_line"`
-	Description       string            `json:"description"`
-	Defaults          map[string]string `json:"defaults" yaml:"defaults"`
-	CreateEmptyOutput bool              `json:"create_empty_output" yaml:"create_empty_output"`
-	Arguments         []string          `json:"arguments"`
-	Parameters        []string          `json:"parameters"`
-	InputFiles        []string          `json:"input_files"`
-	OutputFiles       []string          `json:"output_files"`
-	InputZip          []string          `json:"input_directories"`
-	OutputZip         []string          `json:"output_directories"`
-	isSetup           bool
+	EndPoint              string            `yaml:"endPoint" json:"end_point"`
+	CommandLine           []string          `yaml:"commandLine" json:"command_line"`
+	Description           string            `json:"description"`
+	Defaults              map[string]string `json:"defaults" yaml:"defaults"`
+	CreateEmptyOutput     bool              `json:"create_empty_output" yaml:"create_empty_output"`
+	Arguments             []string          `json:"arguments"`
+	Parameters            []string          `json:"parameters"`
+	InputFiles            []string          `json:"input_files"`
+	OutputFiles           []string          `json:"output_files"`
+	InputZip              []string          `json:"input_directories"`
+	OutputZip             []string          `json:"output_directories"`
+	ParameterDescriptions map[string]string `json:"parameter_descriptions" yaml:"parameter_descriptions"`
+	isSetup               bool
 }
 
 // Parse our argements
@@ -47,6 +48,7 @@ func NewService() *Service {
 	service.Parameters = make([]string, 0)
 	service.InputFiles = make([]string, 0)
 	service.OutputFiles = make([]string, 0)
+	service.ParameterDescriptions = make(map[string]string)
 	return &service
 }
 
