@@ -6,6 +6,8 @@
 #                  #value  -- replace this argument with the parameter from the POST
 #                  <in     -- look for an uploaded file
 #                  >out    -- the process will generate this file for later download
+#                  ^in     -- uploaded file must be a zip file, extract in a directory (called in) and pass directory name as an output
+#                  ~out    -- specify out on the command line as a directory, zip contents for download
 # description   -- description of the endpoint, rendered in Markdown
 # defaults      -- a hashmap of default values for "#value" parameters
 
@@ -23,7 +25,7 @@
 # NB: we request the output file using the "out" parameter, not the filename we requested
 
 # Here is the copy example using jq(http://stedolan.github.io/jq/) to help a bit
-# 
+#
 # id=`curl --silent -X POST --form in=#README.md --form out=small_file.txt localhost:9901/rest/service/copy | jq -r .uuid`
 # wget --content-disposition localhost:9901/rest/job/$id/file/output
 
@@ -62,7 +64,7 @@ mail:
   server: smtp.example.com
   # username: grunt
   # password: <secret>
-  
+
 services:
   - endPoint: echo
     commandLine: ["echo", "#Message"]
