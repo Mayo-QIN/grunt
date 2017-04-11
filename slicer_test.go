@@ -36,22 +36,43 @@ func TestParseService(t *testing.T) {
 		if len(s.InputFiles) != tt.input_file_count {
 			t.Errorf("%v unexpected input file length expected: %v actual: %v -- %v", tt.executable, tt.input_file_count, len(s.InputFiles), s.InputFiles)
 		}
+		for param, doc := range tt.parameter_descriptions {
+			v, ok := s.ParameterDescriptions[param]
+			if !ok {
+				t.Errorf("%v did not find expected description for %v (%v)", tt.executable, param, doc)
+			}
+			if v != doc {
+				t.Errorf("%v incorrect description for %v expected: %v got: %v", tt.executable, param, doc, v)
+			}
+		}
 	}
 }
 
 var serviceTests = []struct {
-	title             string
-	executable        string
-	parameter_count   int
-	input_file_count  int
-	output_file_count int
-	xml               string
+	title                  string
+	executable             string
+	parameter_count        int
+	input_file_count       int
+	output_file_count      int
+	xml                    string
+	parameter_descriptions map[string]string // Test the descriptions
 }{
-	{"Anisotropic Diffusion", "AnisotropicDiffusion", 3, 1, 1, ADXML},
-	{"Gradient Anisotropic Diffusion", "GradientAnisotropicDiffusion", 4, 1, 1, GADXML},
-	{"Tour", "ExecutionModelTour", 10, 2, 4, TourXML},
+	{"Anisotropic Diffusion", "AnisotropicDiffusion", 3, 1, 1, ADXML, map[string]string{
+		"conductance": "Conductance",
+		"timeStep":    "Time Step",
+	}},
+	{"Gradient Anisotropic Diffusion", "GradientAnisotropicDiffusion", 4, 1, 1, GADXML, map[string]string{
+		"conductance": "Conductance controls the sensitivity of the conductance term. As a general rule, the lower the value, the more strongly the filter preserves edges. A high value will cause diffusion (smoothing) across edges. Note that the number of iterations controls how much smoothing is done within regions bounded by edges.",
+		"timeStep":    "The time step depends on the dimensionality of the image. In Slicer the images are 3D and the default (.0625) time step will provide a stable solution.",
+	}},
+	{"Tour", "ExecutionModelTour", 10, 2, 4, TourXML, map[string]string{
+		"integerVariable": "An integer without constraints",
+		"doubleVariable":  "A double with constraints",
+	}},
 	// NB: this is an error, the segimage2itkimage has a bug!  The OutputDirName should be an "output" channel
-	{"Seg Image 2 ITK Image", "segimage2itkimage", 2, 2, 0, segimage2itkimageXML},
+	{"Seg Image 2 ITK Image", "segimage2itkimage", 2, 2, 0, segimage2itkimageXML, map[string]string{
+		"prefix": "Prefix for output file.",
+	}},
 }
 
 // These XML strings are from the Slicer CLI modules and website examples.

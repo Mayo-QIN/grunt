@@ -33,7 +33,7 @@
             <td> {{ range .ParsedCommandLine}} {{.}} {{end}} </td>
             <td>{{humanizeTime .StartTime}}</td>
             <td>{{.Status}}</td>
-            <td>{{humanizeTime .EndTime}}</td>
+            <td>{{if not .EndTime.IsZero  }} {{humanizeTime .EndTime}}{{end}}</td>
           </tr>
 
           {{end}}
