@@ -71,15 +71,25 @@ services:
     description: print a message
     defaults:
       Message: "Hi From Grunt"
+    parameter_descriptions:
+      Message: This is the message to display at the output
   - endPoint: sleep
     commandLine: ["sleep", "#seconds"]
     description: Sleep for a while
     defaults:
       seconds: 300
+    parameter_descriptions:
+      seconds: The number of seconds to sleep
   - endPoint: copy
     commandLine: ["cp", "<input", ">output"]
     description: copy a file
+    parameter_descriptions:
+      input: The input file
+      output: The output file, a copy of `input`
   - endPoint: copy-dir
     commandLine: ["cp", "-r", "-f", "^input", "~output"]
     create_empty_output: false
     description: copy a file
+    parameter_descriptions:
+      input: A zip file containing a directory to copy to `output`
+      output: A zip file that is a copy of `input`
