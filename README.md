@@ -66,6 +66,25 @@ defaults      -- a hashmap of default values for "#value" parameters
 
 `grunt` creates [REST endpoints](https://en.wikipedia.org/wiki/Representational_state_transfer) for command line programs.  Endpoints are listed in the `services` array of the YAML configuration file.  Endpoints require a name (`endPoint`) and `commandLine`.  The format of the `commandLine` is an array of options and parameters.  Special one character prefixes to the parameter list tells `grunt` how to map REST requests to the command line of the Endpoint.
 
+Endpoints are configured by adding to the `services` entry in `gruntfile.yml`.  An example is:
+
+```
+services:
+  - endPoint: toy
+    commandLine: ["toy", "#message"]
+    description: print message
+    defaults:
+      message: "Hi From Grunt"
+    parameter_descriptions:
+      message: This is the message to display at the output
+  - endPoint: ball
+    commandLine: ["ball", "<input", ">output"]
+    description: transforms input to output
+    parameter_descriptions:
+      input: an input file
+      output: the input transformed by the ball operator
+```
+
 ### Values
 
 If an Endpoint needs a simple value (string, float, integer, etc), the endpoint specifies that by the character `#`.  For example, the `toy` command needs a string as input, and would normally be called as `./toy foo` (where `foo` could be any string).  The corresponding `commandLine` setting would be:
