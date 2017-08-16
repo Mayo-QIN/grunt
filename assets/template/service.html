@@ -74,15 +74,18 @@
       <div class="row">
         <h3>Start service interactively</h3>
         <form name="service" method="post" enctype="multipart/form-data">
+
+          {{ if $c.Mail.Server }}
           <div class="panel panel-default">
             <div class="panel-body">
-            <label>email notification </label>
-            <div class="input-group">
-              <span class="input-group-addon" id="email-decoration">@</span>
-              <input type="text" class="form-control" placeholder="email@example.com" name="mail" aria-describedby="email-decoration">
+              <label>email notification </label>
+              <div class="input-group">
+                <span class="input-group-addon" id="email-decoration">@</span>
+                <input type="text" class="form-control" placeholder="email@example.com" name="mail" aria-describedby="email-decoration">
+              </div>
             </div>
-          </div>
-              
+            {{end}}
+            
                 {{$parameter_descriptions := .ParameterDescriptions}}
                 {{ if .Parameters }}
                 <div class="panel panel-default">
