@@ -74,44 +74,53 @@
       <div class="row">
         <h3>Start service interactively</h3>
         <form name="service" method="post" enctype="multipart/form-data">
-          {{$parameter_descriptions := .ParameterDescriptions}}
-          {{ if .Parameters }}
           <div class="panel panel-default">
-            <div class="panel-heading">
-              Command line parameters for <code>{{.EndPoint}}</code>.  Typically these are strings or numbers.
-            </div>
             <div class="panel-body">
-              {{ range $p := .Parameters}}
-              <div class="form-group">
-                <label for="{{$p}}">{{$p}} <span class="text-muted">{{ index $parameter_descriptions $p | markdown }}</span></label>
-                {{ $default := index $d $p }}
-                {{ if isArray $default}}
-                {{ $a := toArray $default }}
-                <div class="input-group">
-                  <input class="form-control" id="{{$p}}" placeholder="{{index $a 0}}" type="text" name="{{$p}}">
-                  <div class="input-group-btn">
-                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Options <span class="caret"></span></button>
-                    <ul class="dropdown-menu dropdown-menu-right">
-                      {{ range $index, $value := $a }}
-                      <li><a href="#" id="{{$p}}-{{$index}}">{{$value}}</a></li>
-                      {{end}}
-                    </ul>
-                  </div><!-- /btn-group -->
-                </div>
-                <!-- Javascript -->
-                <script>
-                $(document).ready(function() {
-                  {{ range $index, $value := $a }}
-                  $('#{{$p}}-{{$index}}').click(function(e) {
-                    $('#{{$p}}').val ( '{{$value}}' );
-                  });
-                  {{end}}
-                });
-                </script>
+            <label>email notification </label>
+            <div class="input-group">
+              <span class="input-group-addon" id="email-decoration">@</span>
+              <input type="text" class="form-control" placeholder="email@example.com" name="mail" aria-describedby="email-decoration">
+            </div>
+          </div>
+              
+                {{$parameter_descriptions := .ParameterDescriptions}}
+                {{ if .Parameters }}
+                <div class="panel panel-default">
+                  <div class="panel-heading">
+                    Command line parameters for <code>{{.EndPoint}}</code>.  Typically these are strings or numbers.
+                  </div>
+                  <div class="panel-body">
+                    {{ range $p := .Parameters}}
+                    <div class="form-group">
+                      <label for="{{$p}}">{{$p}} <span class="text-muted">{{ index $parameter_descriptions $p | markdown }}</span></label>
+                      {{ $default := index $d $p }}
+                      {{ if isArray $default}}
+                      {{ $a := toArray $default }}
+                      <div class="input-group">
+                        <input class="form-control" id="{{$p}}" placeholder="{{index $a 0}}" value="{{index $a 0}}" type="text" name="{{$p}}">
+                        <div class="input-group-btn">
+                          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Options <span class="caret"></span></button>
+                          <ul class="dropdown-menu dropdown-menu-right">
+                            {{ range $index, $value := $a }}
+                            <li><a href="#" id="{{$p}}-{{$index}}">{{$value}}</a></li>
+                            {{end}}
+                          </ul>
+                        </div><!-- /btn-group -->
+                      </div>
+                      <!-- Javascript -->
+                      <script>
+                      $(document).ready(function() {
+                        {{ range $index, $value := $a }}
+                        $('#{{$p}}-{{$index}}').click(function(e) {
+                          $('#{{$p}}').val ( '{{$value}}' );
+                        });
+                        {{end}}
+                      });
+                      </script>
 
                 
                 {{else}}
-                <input class="form-control" id="{{$p}}" placeholder="{{index $d $p}}" type="text" name="{{$p}}">
+                <input class="form-control" id="{{$p}}" placeholder="{{index $d $p}}" value="{{index $d $p}}" type="text" name="{{$p}}">
                 {{end}}
               </div>
               {{end}}
