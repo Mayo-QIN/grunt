@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	humanize "github.com/dustin/go-humanize"
@@ -27,6 +28,12 @@ var funcs = template.FuncMap{
 	},
 	"humanizeTime": humanize.Time,
 	"now":          time.Now,
+	"isArray":      func(s string) bool { return strings.HasPrefix(s, "[") && strings.HasSuffix(s, "]") },
+	"toArray": func(s string) []string {
+		v := strings.TrimPrefix(s, "[")
+		v = strings.TrimSuffix(v, "]")
+		return strings.Split(v, ",")
+	},
 	"markdown": func(s string) template.HTML {
 		return template.HTML(string(blackfriday.MarkdownCommon([]byte(s))))
 	},
@@ -63,7 +70,7 @@ func Template(name string, data map[string]interface{}, w http.ResponseWriter, r
 		"serviceMap": config.ServiceMap,
 		"help":       helpText,
 		"vars":       mux.Vars(request),
-		"version":    VersionInfo,
+		"version":    Version,
 	}
 
 	// merge in our extra data

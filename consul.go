@@ -45,10 +45,12 @@ func setupConsul() {
 		if os.Getenv("CONSUL_PORT_8500_TCP_PORT") != "" {
 			portString = os.Getenv("CONSUL_PORT_8500_TCP_PORT")
 		}
-		consulPort, err = strconv.Atoi(portString)
-		if err != nil {
-			log.Printf("Could not parse port: %v", err.Error())
-			return
+		if portString != "" {
+			consulPort, err = strconv.Atoi(portString)
+			if err != nil {
+				log.Printf("Could not parse port: %v", err.Error())
+				return
+			}
 		}
 	}
 

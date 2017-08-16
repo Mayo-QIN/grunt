@@ -110,9 +110,13 @@ setup: clean .GOPATH/.ok
 	- ./bin/gvt fetch golang.org/x/tools/cmd/goimports
 	- ./bin/gvt fetch github.com/wadey/gocovmerge
 
-VERSION          := $(shell git describe --tags --always --dirty="-dev")
+VERSION          := $(shell git describe --tags --always --dirty="-dev" --abbrev=0)
+VERSIONFULL      := $(shell git describe --tags --always)
 DATE             := $(shell date -u '+%Y-%m-%d-%H%M UTC')
-VERSION_FLAGS    := -ldflags='-X "main.Version=$(VERSION)" -X "main.BuildTime=$(DATE)"'
+HASH             := $(shell git rev-parse --verify HEAD)
+HASH_SHORT       := $(shell git rev-parse --verify --short HEAD)
+VERSION_FLAGS    := -ldflags='-X "main.Version=$(VERSION)" -X "main.BuildTimestamp=$(DATE)" -X "main.FullVersion=$(VERSIONFULL)" -X "main.Hash=$(HASH)" -X "main.ShortHash=$(HASH_SHORT)"'
+
 
 # cd into the GOPATH to workaround ./... not following symlinks
 _allpackages = $(shell ( cd $(CURDIR)/.GOPATH/src/$(IMPORT_PATH) && \

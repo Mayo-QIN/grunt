@@ -1,11 +1,11 @@
 To: {{.to}}
-Subject: Results of {{.job.Endpoint}}
+Subject: Results of {{.job.EndPoint}}
 
-I am the email for the grunt job {{.job.Endpoint}} ({{.job.UUID}}).
+I am the email for the grunt job {{.job.EndPoint}} ({{.job.UUID}}).
 
 Job Details are here: http://{{.config.Server}}/job/{{.job.UUID}}
 
-{{$config := .config}}{{$uuid := .job.UUID}}{{range $key, $value := .job.FileMap}}
+{{- $config := .config}}{{$uuid := .job.UUID}}{{range $key, $value := .job.FileMap -}}
 File {{$key}} -- http://{{$config.Server}}/rest/job/{{$uuid}}/file/{{$key}}
 {{end}}
 

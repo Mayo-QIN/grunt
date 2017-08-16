@@ -9,6 +9,8 @@ import (
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/Mayo-QIN/grunt/dassets"
 )
 
 func Email(job *Job) {
@@ -26,7 +28,11 @@ func Email(job *Job) {
 		"to":      strings.Trim(fmt.Sprint(job.Address), "[]"),
 		"config":  config,
 	}
+
 	contents, _ := Asset("template/email.txt")
+	if debug {
+		contents, _ = dassets.Asset("template/email.txt")
+	}
 	t, _ := template.New("email").Parse(string(contents))
 	var buffer bytes.Buffer
 	err := t.Execute(&buffer, templateData)
@@ -35,10 +41,7 @@ func Email(job *Job) {
 		return
 	}
 	server := fmt.Sprintf("%s:%d", config.Mail.Server, config.Mail.Port)
-	log.Printf("Mailing status for %v", job.UUID)
-	log.Printf("Sending to: %v", templateData["job"])
-	log.Printf("With auth: %+v", auth)
-	log.Printf("Body: \n%v", buffer.String())
+	log.Printf("Mailing status for %v (%v) to %v", job.EndPoint, job.UUID, job.Address)
 	err = smtp.SendMail(server, auth, config.Mail.From, job.Address, buffer.Bytes())
 	if err != nil {
 		log.Printf("Error sending mail: %v", err.Error())
