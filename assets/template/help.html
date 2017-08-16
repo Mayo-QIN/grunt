@@ -10,22 +10,10 @@
   <body>
     {{ template "template/header.html" . }}
     <div class="container">
-      <h1>Version Information</h1>
+      <h3>Version</h3>
       <div class="row">
         <div class="col-sm-1"><span class="pull-right"><strong>Version</strong></span></div>
-        <div class="col-sm-8"><span class="pull-left">{{.version.Version}}</span></div>
-      </div>
-      <div class="row">
-        <div class="col-sm-1"><span class="pull-right"><strong>FullVersion</strong></span></div>
-        <div class="col-sm-8"><span class="pull-left">{{.version.FullVersion}}</span></div>
-      </div>
-      <div class="row">
-        <div class="col-sm-1"><span class="pull-right"><strong>Date</strong></span></div>
-        <div class="col-sm-8"><span class="pull-left">{{.version.Date}}</span></div>
-      </div>
-      <div class="row">
-        <div class="col-sm-1"><span class="pull-right"><strong>Hash</strong></span></div>
-        <div class="col-sm-8"><span class="pull-left">{{.version.Hash}}</span></div>
+        <div class="col-sm-8"><span class="pull-left">{{.version}}</span></div>
       </div>
       
       {{ .help }}
