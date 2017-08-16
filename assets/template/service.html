@@ -16,43 +16,61 @@
     {{ with .service }}
     <div class="container">
       <div class="row">
-        <h1>{{.EndPoint}}</h1>
-      </div>
-      <div class="row">
-        <div class="col-sm-4">endpoint</div>
-        <div class="col-sm-8">{{.EndPoint}}</div>
+        <h1>{{.EndPoint}}</h1> <a id="show-info-C61194C4-5B08-43E8-841D-4F651F59516B" class="" type="" data-toggle="collapse" data-target="#collapseInfo" aria-expanded="false" aria-controls="collapseInfo">show info</a>
+
+        <script>
+        $(document).ready(function() {
+          console.log("Found element");
+          $('#show-info-C61194C4-5B08-43E8-841D-4F651F59516B').click(function(e){
+            var a = $('#show-info-C61194C4-5B08-43E8-841D-4F651F59516B');
+            console.log("Found element",a);
+            console.log("Found element",a.attr('aria-expanded'));
+            if ( a.attr('aria-expanded') == 'true' ) {
+              a.html('show info');
+            } else {
+              a.html('hide info');
+            }
+          });
+        });
+        </script>
       </div>
 
-      <div class="row">
-        <div class="col-sm-4">command line</div>
-        <div class="col-sm-8">{{range .CommandLine}}{{.}} {{end}}</div>
-      </div>
-      
-      <div class="row">
-        <div class="col-sm-4">description</div>
-        <div class="col-sm-8">{{ markdown .Description }}</div>
-      </div>
-
-      <div class="row">
-        <h3>Start service with <code>curl</code></h3>
-        {{ $d := .Defaults }}
-        <div class="well" id="curl-command">
+      <div class="collapse" id="collapseInfo">
+        <div class="row">
+          <div class="col-sm-4">endpoint</div>
+          <div class="col-sm-8">{{.EndPoint}}</div>
         </div>
-      </div>
 
-      <script type="text/javascript">
+        <div class="row">
+          <div class="col-sm-4">command line</div>
+          <div class="col-sm-8">{{range .CommandLine}}{{.}} {{end}}</div>
+        </div>
+      
+        <div class="row">
+          <div class="col-sm-4">description</div>
+          <div class="col-sm-8">{{ markdown .Description }}</div>
+        </div>
+
+        <div class="row">
+          <h3>Start service with <code>curl</code></h3>
+          {{ $d := .Defaults }}
+          <div class="well" id="curl-command">
+          </div>
+        </div>
+
+        <script type="text/javascript">
         
         var t = document.getElementById('curl-command');
         t.innerHTML = "curl -X POST {{ range $p := .Parameters}} --form {{ $p }}=\"{{index $d $p}}\"{{end}}" +
-        "{{ range $p := .InputFiles }} --form {{$p}}=@FILENAME {{end}}" +
-        "{{ range $p := .OutputFiles }} --form {{$p}}=output.FILENAME {{end}}" +
-        "{{ range $p := .InputZip }} --form {{$p}}=@FILENAME.zip {{end}}" + 
-        "{{ range $p := .OutputZip }} --form {{$p}}=output.zip {{end}}" +
-      " " + window.location.hostname + ":" + window.location.port + "/rest/service/{{.EndPoint}}";
+                      "{{ range $p := .InputFiles }} --form {{$p}}=@FILENAME {{end}}" +
+                      "{{ range $p := .OutputFiles }} --form {{$p}}=output.FILENAME {{end}}" +
+                      "{{ range $p := .InputZip }} --form {{$p}}=@FILENAME.zip {{end}}" + 
+                      "{{ range $p := .OutputZip }} --form {{$p}}=output.zip {{end}}" +
+                      " " + window.location.hostname + ":" + window.location.port + "/rest/service/{{.EndPoint}}";
 
-      </script>
+        </script>
+      </div>
 
-      
       <div class="row">
         <h3>Start service interactively</h3>
         <form name="service" method="post" enctype="multipart/form-data">
@@ -66,7 +84,35 @@
               {{ range $p := .Parameters}}
               <div class="form-group">
                 <label for="{{$p}}">{{$p}} <span class="text-muted">{{ index $parameter_descriptions $p | markdown }}</span></label>
+                {{ $default := index $d $p }}
+                {{ if isArray $default}}
+                {{ $a := toArray $default }}
+                <div class="input-group">
+                  <input class="form-control" id="{{$p}}" placeholder="{{index $a 0}}" type="text" name="{{$p}}">
+                  <div class="input-group-btn">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Options <span class="caret"></span></button>
+                    <ul class="dropdown-menu dropdown-menu-right">
+                      {{ range $index, $value := $a }}
+                      <li><a href="#" id="{{$p}}-{{$index}}">{{$value}}</a></li>
+                      {{end}}
+                    </ul>
+                  </div><!-- /btn-group -->
+                </div>
+                <!-- Javascript -->
+                <script>
+                $(document).ready(function() {
+                  {{ range $index, $value := $a }}
+                  $('#{{$p}}-{{$index}}').click(function(e) {
+                    $('#{{$p}}').val ( '{{$value}}' );
+                  });
+                  {{end}}
+                });
+                </script>
+
+                
+                {{else}}
                 <input class="form-control" id="{{$p}}" placeholder="{{index $d $p}}" type="text" name="{{$p}}">
+                {{end}}
               </div>
               {{end}}
             </div>
@@ -169,6 +215,10 @@
     });
     ev.preventDefault();
     }, false);
+
+    
+
+    
     </script>
   </body>
 </html>

@@ -67,12 +67,11 @@ mail:
 
 services:
   - endPoint: echo
-    commandLine: ["echo", "#Message"]
+    commandLine: ["echo", "#Message", "#M"]
     description: print a message
     defaults:
       Message: "Hi From Grunt"
-    parameter_descriptions:
-      Message: This is the message to display at the output
+      M: "[Hi From Grunt, Bye from Grunt]"
   - endPoint: sleep
     commandLine: ["sleep", "#seconds"]
     description: Sleep for a while
