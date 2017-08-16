@@ -2,7 +2,6 @@ package main
 
 //go:generate bin/go-bindata -nometadata -prefix assets -o assets.go assets/... README.md
 //go:generate bin/go-bindata -nometadata -debug -pkg dassets -prefix assets -o dassets/assets.go assets/... README.md
-//go:generate ./version.sh
 
 import (
 	"flag"
@@ -47,13 +46,19 @@ var advertisedHost string = ""
 var advertisedPort int = 9901
 var debug bool
 
+var Version string
+var FullVersion string
+var BuildTimestamp string
+var Hash string
+var ShortHash string
+
 func main() {
 	log.Printf("Starting grunt")
-	log.Printf("\tVersion:      %v", VersionInfo.Version)
-	log.Printf("\tFull:         %v", VersionInfo.FullVersion)
-	log.Printf("\tVersion Date: %v", VersionInfo.Date)
-	log.Printf("\tHash:         %v", VersionInfo.Hash)
-	log.Printf("\tShort Hash:   %v", VersionInfo.ShortHash)
+	log.Printf("\tVersion:      %v", Version)
+	log.Printf("\tFull:         %v", FullVersion)
+	log.Printf("\tBuild Date:   %v", BuildTimestamp)
+	log.Printf("\tHash:         %v", Hash)
+	log.Printf("\tShort Hash:   %v", ShortHash)
 	var port int
 	flag.IntVar(&port, "p", 9901, "specify port to use.  defaults to 9901.")
 	flag.StringVar(&consulHost, "consul", "", "specify Consul host. defaults to none. Also set by CONSUL_HOST or CONSULT_PORT_8500_TCP_ADDR environment variable")
