@@ -17,7 +17,7 @@
       {{ with .job }}
       <div class="row">
         <div class="col-sm-4">Status</div>
-        <div class="col-sm-8">{{.Status}}</div>
+        <div class="col-sm-8" id="status" class="text-info">{{.Status}}</div>
       </div>
       
       <div class="row">
@@ -102,22 +102,37 @@
   function refresh() {
     axios.get("/rest/job/{{.job.UUID}}")
          .then(function(response) {
-           console.log(response);
+           /* console.log(response);*/
+           /* console.log ( "status: " + response.data.status )*/
            $('#log').text(response.data.Output);
-           $('#start').text(response.data.start_time_humanized);
-           $('#end').text(response.data.end_time_humanized);
-           console.log ( "status: " + response.data.status )
+           $('#status').text(response.data.status);
+           $('#status').removeClass ( "text-success text-danger text-info");
+           if ( response.data.status == "success") {
+             $('#status').addClass('text-success');
+             $('#start').text(response.data.start_time_full);
+             $('#end').text(response.data.end_time_full);
+           }
+           if ( response.data.status == "failed") {
+             $('#status').addClass('text-danger');
+             $('#start').text(response.data.start_time_full);
+             $('#end').text(response.data.end_time_full);
+           }
+           if ( response.data.status == "running") {
+             $('#status').addClass('text-info');
+             $('#start').text(response.data.start_time_humanized);
+             $('#end').text(response.data.end_time_humanized);
+           }
+
+
            if ( response.data.status != "running") {
-             location.reload(true);
+             setTimeout(refresh,2000)
            } else {
              // reschedule
              setTimeout(refresh,2000)
            }
          });
   }
-  if ( {{.job.Status}} == "running") {
-    setTimeout(refresh,2000)
-  }
+  refresh()
   
   </script>
 
