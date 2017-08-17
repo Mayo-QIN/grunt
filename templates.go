@@ -64,13 +64,16 @@ func loadTemplates(names []string, asset func(name string) ([]byte, error)) {
 
 func Template(name string, data map[string]interface{}, w http.ResponseWriter, request *http.Request) {
 	templateData := map[string]interface{}{
-		"jobs":       jobs,
-		"config":     config,
-		"services":   config.Services,
-		"serviceMap": config.ServiceMap,
-		"help":       helpText,
-		"vars":       mux.Vars(request),
-		"version":    Version,
+		"jobs":           jobs,
+		"config":         config,
+		"services":       config.Services,
+		"serviceMap":     config.ServiceMap,
+		"help":           helpText,
+		"vars":           mux.Vars(request),
+		"version":        Version,
+		"fullVersion":    FullVersion,
+		"buildTimestamp": BuildTimestamp,
+		"hash":           Hash,
 	}
 
 	// merge in our extra data

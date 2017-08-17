@@ -46,12 +46,27 @@ type Job struct {
 // see http://choly.ca/post/go-json-marshalling/
 func (job *Job) MarshalJSON() ([]byte, error) {
 	type Alias Job
+	f := func(t time.Time) string {
+		if t.IsZero() {
+			return ""
+		} else {
+			return humanize.Time(t)
+		}
+	}
 	return json.Marshal(&struct {
-		TempString string `json:"output"`
+		TempString         string `json:"output"`
+		StartTimeHumanized string `json:"start_time_humanized"`
+		EndTimeHumanized   string `json:"end_time_humanized"`
+		StartTimeFull      string `json:"start_time_full"`
+		EndTimeFull        string `json:"end_time_full"`
 		*Alias
 	}{
-		TempString: job.Output.String(),
-		Alias:      (*Alias)(job),
+		TempString:         job.Output.String(),
+		StartTimeHumanized: humanize.Time(job.StartTime),
+		EndTimeHumanized:   f(job.EndTime),
+		StartTimeFull:      job.StartTime.Format(time.UnixDate),
+		EndTimeFull:        job.EndTime.Format(time.UnixDate),
+		Alias:              (*Alias)(job),
 	})
 }
 
