@@ -216,16 +216,21 @@
       axios.post("/rest/service/{{.service.EndPoint}}", oData)
            .then(function(response) {
              console.log(response);
-             oOutput.innerHTML =
-               '<br/><div class="alert alert-success">Service started see <a href="/job/' + response.data.uuid + '">job status</a></div>' +
-               "<pre>" + JSON.stringify(response.data,null,4) + "</pre>";
-           })
-           .catch(function(error){
-             oOutput.innerHTML = "<h3>Error</h3><br/>" +
-                                 '<div class="alert alert-info">' +
-                                 error + '</div><div class="alert alert-warning">' + error.response.data + '</div>'
-    });
-    ev.preventDefault();
+
+             window.open ( '/job/' + response.data.uuid, "_self" );
+             return;
+             
+             /* oOutput.innerHTML =
+              *   '<br/><div class="alert alert-success">Service started see <a href="/job/' + response.data.uuid + '">job status</a></div>' +
+              *   "<pre>" + JSON.stringify(response.data,null,4) + "</pre>";
+                })
+                .catch(function(error){
+              * oOutput.innerHTML = "<h3>Error</h3><br/>" +
+              *                     '<div class="alert alert-info">' +
+              *                     error + '</div><div class="alert alert-warning">' + error.response.data + '</div>'*/
+             
+           });
+      ev.preventDefault();
     }, false);
 
     
