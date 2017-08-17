@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   </head>
   <body>
     {{ template "template/header.html" . }}
@@ -21,12 +22,12 @@
       
       <div class="row">
         <div class="col-sm-4">Start time</div>
-        <div class="col-sm-8">{{humanizeTime .StartTime}}</div>
+        <div class="col-sm-8" id="start">{{humanizeTime .StartTime}}</div>
       </div>
       
       <div class="row">
         <div class="col-sm-4">End time</div>
-        <div class="col-sm-8">{{if not .EndTime.IsZero  }} {{humanizeTime .EndTime}}{{end}}</div>
+        <div class="col-sm-8" id="end">{{if not .EndTime.IsZero  }} {{humanizeTime .EndTime}}{{end}}</div>
       </div>
       
       <div class="row">
@@ -45,6 +46,16 @@
       </div>
 
       <div class="row">
+        <div class="col-sm-4">JSON</div>
+        <div class="col-sm-8"><a href="/rest/job/{{.UUID}}">status</a></div>
+      </div>
+
+      <div class="row">
+        <div class="col-sm-4">All job data</div>
+        <div class="col-sm-8"><a href="/rest/job/{{.UUID}}/zip">download</a></div>
+      </div>
+
+      <div class="row">
         <table class="table table-striped">
           <thead>
             <tr>
@@ -52,11 +63,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><a href="/rest/job/{{.UUID}}">JSON status</a></td>
-            </tr>
             {{$uuid := .UUID}}
-            <tr><td><a href="/rest/job/{{$uuid}}/zip">Zip file of all inputs and outputs</a></td></tr>
             {{range $key, $value := .FileMap}}
             <tr>
               <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
@@ -80,7 +87,7 @@
           </thead>
           <tbody>
             <tr>
-              <th><pre style="background-color: transparent; border: 0px;padding: 0px">{{.Output.String}}</pre></th>
+              <th><pre id="log" style="background-color: transparent; border: 0px;padding: 0px">{{.Output.String}}</pre></th>
             </tr>
           </tbody>
         </table>
@@ -89,4 +96,30 @@
       {{end}}      
     </div>
   </body>
+
+  <script type="text/javascript">
+
+  function refresh() {
+    axios.get("/rest/job/{{.job.UUID}}")
+         .then(function(response) {
+           console.log(response);
+           $('#log').text(response.data.Output);
+           $('#start').text(response.data.start_time_humanized);
+           $('#end').text(response.data.end_time_humanized);
+           console.log ( "status: " + response.data.status )
+           if ( response.data.status != "running") {
+             location.reload(true);
+           } else {
+             // reschedule
+             setTimeout(refresh,2000)
+           }
+         });
+  }
+  if ( {{.job.Status}} == "running") {
+    setTimeout(refresh,2000)
+  }
+  
+  </script>
+
+  
 </html>
