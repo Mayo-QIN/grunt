@@ -16,7 +16,7 @@
     {{ with .service }}
     <div class="container">
       <div class="row">
-        <h1>{{.EndPoint}}</h1> <a id="show-info-C61194C4-5B08-43E8-841D-4F651F59516B" class="" type="" data-toggle="collapse" data-target="#collapseInfo" aria-expanded="false" aria-controls="collapseInfo">show info</a>
+        <h1>{{.EndPoint}}</h1> <a id="show-info-C61194C4-5B08-43E8-841D-4F651F59516B" class="" type="" data-toggle="collapse" data-target="#endpoint-C61194C4-5B08-43E8-841D-4F651F59516B,#cl-C61194C4-5B08-43E8-841D-4F651F59516B,#description-C61194C4-5B08-43E8-841D-4F651F59516B,#curl-C61194C4-5B08-43E8-841D-4F651F59516B" aria-expanded="false">show info</a>
 
         <script>
         $(document).ready(function() {
@@ -35,28 +35,26 @@
         </script>
       </div>
 
-      <div class="collapse" id="collapseInfo">
-        <div class="row">
+        <div class="row collapse" id="endpoint-C61194C4-5B08-43E8-841D-4F651F59516B">
           <div class="col-sm-4">endpoint</div>
           <div class="col-sm-8">{{.EndPoint}}</div>
         </div>
 
-        <div class="row">
+        <div class="row collapse" id="cl-C61194C4-5B08-43E8-841D-4F651F59516B">
           <div class="col-sm-4">command line</div>
           <div class="col-sm-8">{{range .CommandLine}}{{.}} {{end}}</div>
         </div>
-      
-        <div class="row">
+        
+        <div class="row collapse" id="description-C61194C4-5B08-43E8-841D-4F651F59516B">
           <div class="col-sm-4">description</div>
           <div class="col-sm-8">{{ markdown .Description }}</div>
         </div>
 
-        <div class="row">
+        <div class="row collapse" id="curl-C61194C4-5B08-43E8-841D-4F651F59516B">
           <h3>Start service with <code>curl</code></h3>
           {{ $d := .Defaults }}
           <div class="well" id="curl-command">
           </div>
-        </div>
 
         <script type="text/javascript">
         

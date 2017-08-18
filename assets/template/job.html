@@ -31,26 +31,46 @@
       </div>
       
       <div class="row">
+        <div class="col-sm-4">
+          <a id="show-extra-C61194C4-5B08-43E8-841D-4F651F59516B" class="" type="" data-toggle="collapse" data-target="#uuid,#cl,#parsed,#json,#all" aria-expanded="false" aria-controls="collapseInfo">show info</a>
+        </div>
+      </div>
+
+      <script>
+      $(document).ready(function() {
+        console.log("Found element");
+        $('#show-extra-C61194C4-5B08-43E8-841D-4F651F59516B').click(function(e){
+          var a = $('#show-extra-C61194C4-5B08-43E8-841D-4F651F59516B');
+          if ( a.attr('aria-expanded') == 'true' ) {
+            a.html('show info');
+          } else {
+            a.html('hide info');
+          }
+        });
+      });
+      </script>
+      
+      <div class="row collapse" id="uuid">
         <div class="col-sm-4">UUID</div>
         <div class="col-sm-8">{{.UUID}}</div>
       </div>
 
-      <div class="row">
+      <div class="row collapse" id="cl">
         <div class="col-sm-4">Command line</div>
         <div class="col-sm-8">{{range .CommandLine}}{{.}} {{end}}</div>
       </div>
       
-      <div class="row">
+      <div class="row collapse" id="parsed">
         <div class="col-sm-4">Parsed line</div>
         <div class="col-sm-8">{{range .ParsedCommandLine}}{{.}} {{end}}</div>
       </div>
 
-      <div class="row">
+      <div class="row collapse" id="json">
         <div class="col-sm-4">JSON</div>
         <div class="col-sm-8"><a href="/rest/job/{{.UUID}}">status</a></div>
       </div>
 
-      <div class="row">
+      <div class="row collapse" id="all">
         <div class="col-sm-4">All job data</div>
         <div class="col-sm-8"><a href="/rest/job/{{.UUID}}/zip">download</a></div>
       </div>
