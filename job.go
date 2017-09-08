@@ -223,7 +223,7 @@ func (job *Job) Start() {
 		Email(job)
 
 		// Cleanup after 120 minutes
-		<-time.After(time.Minute * 120)
+		<-time.After(time.Minute * time.Duration(config.CleanupTimeInMinutes))
 		Cleanup(job)
 	}()
 

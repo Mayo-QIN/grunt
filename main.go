@@ -28,16 +28,17 @@ type SMTP struct {
 }
 
 type Config struct {
-	Services        []*Service          `json:"services"`
-	SlicerServices  []*SlicerService    `yaml:"cli" json:"-"`
-	ServiceMap      map[string]*Service `json:"-"`
-	Mail            SMTP                `json:"mail"`
-	Name            string              `json:"name"`
-	Server          string              `json:"server"`
-	Directory       string              `json:"working_directory"`
-	ConfigDirectory string              `json:"config_directory" yaml:"configDirectory"`
-	WarnLevel       int                 `json:"warn_level" yaml:"warnLevel"`
-	CriticalLevel   int                 `json:"critical_level" yaml:"criticalLevel"`
+	Services             []*Service          `json:"services"`
+	SlicerServices       []*SlicerService    `yaml:"cli" json:"-"`
+	ServiceMap           map[string]*Service `json:"-"`
+	Mail                 SMTP                `json:"mail"`
+	Name                 string              `json:"name"`
+	Server               string              `json:"server"`
+	Directory            string              `json:"working_directory"`
+	ConfigDirectory      string              `json:"config_directory" yaml:"configDirectory"`
+	WarnLevel            int                 `json:"warn_level" yaml:"warnLevel"`
+	CriticalLevel        int                 `json:"critical_level" yaml:"criticalLevel"`
+	CleanupTimeInMinutes int                 `json:"cleanup_time_in_minutes"`
 }
 
 var config Config
@@ -66,6 +67,7 @@ func main() {
 	config.WarnLevel = 3
 	config.CriticalLevel = 5
 	config.Mail.Port = 25
+	config.CleanupTimeInMinutes = 120
 
 	flag.Parse()
 
