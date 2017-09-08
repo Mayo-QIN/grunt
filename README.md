@@ -13,6 +13,7 @@ go get github.com/Mayo-QIN/grunt
 In a clone of the repo (kudos to the fine [Hellogopher](https://github.com/cloudflare/hellogopher)):
 
 ``` bash
+https://github.com/Mayo-QIN/grunt.git
 make
 ```
 
@@ -22,7 +23,7 @@ make
 
 Run grunt on port `9901` (the default listening port).
 
-## Fancy demo
+# Fancy demo
 
 ```bash
 # Build the grunt docker
@@ -34,7 +35,7 @@ docker run -d -p 9901:9901 grunt
 
 Check the grunt web interface http://localhost:9901
 
-## REST Endpoints
+# REST Endpoints
 
 | endpoint                         | method | parameters       | description                                                 |
 |----------------------------------|--------|------------------|-------------------------------------------------------------|
@@ -45,7 +46,7 @@ Check the grunt web interface http://localhost:9901
 | `/rest/job/wait/{id}`            | GET    | `id`             | Does not return until the Job completes                     |
 | `/rest/job/{id}/file/{filename}` | GET    | `id`, `filename` | Retrieve the file `filename` from the Job specified by `id` |
 
-## Configuration
+# Configuration
 
 An example configuration is found in `gruntfile.yml`. A service consists of the following fields:
 
@@ -175,6 +176,9 @@ wget --content-disposition localhost:9901/rest/job/$id/file/logs
 
 **NB:** `wget` is used because `--content-disposition` honors the output filename passed along by `grunt`, so the output filename would be `my_log_files.zip`.
 
+### Defaults
+
+Generally, defaults are a single string.  The string is shown on the user interface as a suggested value for the parameter.  To show a drop-down list of suggestions, write the string as an array
 
 ### Shims
 
@@ -199,6 +203,50 @@ list=$(ls -1 $1 | paste -s -d , - )
 
 # call toy with the list
 ./toy "$list"
+```
+
+## Miscellaneous configuration
+
+Server identification:
+```
+# This is the hostname:port that the server is running on.
+# Used for logging and email
+server: fod1.mayo.edu:9901
+```
+
+Cleanup completed jobs:
+```
+# Cleanup after 30 minutes, default is 120
+cleanup_time_in_minutes: 30
+```
+
+Where job files are stored:
+```
+# Working directory
+# This is the directory path used for working files. If left blank,
+# use a system temp directory.
+# NB: To run in the pesscara/grunt docker, this must be set to /data
+directory: data
+```
+
+[Consul](https://www.consul.io/) reporting:
+```
+# Service name for Consul
+name: example
+# Report Warn status to Consul when we have more than warnLevel jobs
+warnLevel: 3
+# Report Critical status to Consul when we have more than criticalLevel jobs
+warnLevel: 5
+```
+
+Sending job emails:
+```
+# Mail configuration
+mail:
+  from: noreply@grunt-docker.io
+  server: smtp.example.com
+  # username: grunt
+  # password: <secret>
 ```
 
 # Examples
@@ -270,6 +318,8 @@ curl -v localhost:9901/rest/job/$id
 # Wait for the job to complete
 curl -v localhost:9901/rest/job/wait/$id
 ```
+
+
 
 ## Acknowledgement 
 

@@ -47,6 +47,9 @@
 # Used for logging and email
 server: localhost:9901
 
+# Cleanup after 30 minutes, default is 120
+cleanup_time_in_minutes: 30
+
 # Working directory
 # This is the directory path used for working files. If left blank,
 # use a system temp directory.
@@ -74,7 +77,7 @@ services:
     description: print a message
     defaults:
       Message: "Hi From Grunt"
-      Message2: "[Hi From Grunt, Bye from Grunt]"
+      Message2: {Hi From Grunt, Bye from Grunt}
   - endPoint: sleep
     commandLine: ["sleep", "#seconds"]
     description: Sleep for a while
