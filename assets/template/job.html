@@ -124,7 +124,7 @@
          .then(function(response) {
            /* console.log(response);*/
            /* console.log ( "status: " + response.data.status )*/
-           $('#log').text(response.data.Output);
+           $('#log').text(response.data.output);
            $('#status').text(response.data.status);
            $('#status').removeClass ( "text-success text-danger text-info");
            if ( response.data.status == "success") {
