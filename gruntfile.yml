@@ -48,7 +48,7 @@
 server: localhost:9901
 
 # Cleanup after 30 minutes, default is 120
-cleanup_time_in_minutes: 30
+cleanupTimeInMinutes: 30
 
 # Working directory
 # This is the directory path used for working files. If left blank,
