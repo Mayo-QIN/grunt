@@ -1,8 +1,8 @@
 package main
 
 
-var Version string = "1.0.3"
-var FullVersion string = "1.0.3"
-var BuildTimestamp string = "2017-09-08-1501 UTC"
-var Hash string = "193b98e49c6402f0b79df9657050a54353fcf83b"
+var Version string = "1.0.4"
+var FullVersion string = "1.0.4"
+var BuildTimestamp string = "2017-10-05-1104 UTC"
+var Hash string = "6cbef643445a71b42c8f7b044bd3b556919197a2"
 

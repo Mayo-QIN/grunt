@@ -18,6 +18,7 @@ Makefile for grunt
   all          - make everything
   test         - run tests
   build-docker - build a linux version for a docker
+  linux        - build a linux version for a docker
 
 endef
 export help
@@ -35,7 +36,8 @@ build: .GOPATH/.ok bindata
 list_imports: .GOPATH/.ok
 	$Q go list -f '{{ join .Deps "\n" }}' $(IMPORT_PATH)
 
-.PHONY: build-docker
+.PHONY: build-docker linux
+linux: build-docker
 build-docker: .GOPATH/.ok bindata
 	$Q GOOS=linux GOARCH=amd64 go generate $(if $V,-v) $(VERSION_FLAGS) $(IMPORT_PATH)
 	$Q GOOS=linux GOARCH=amd64 go install $(if $V,-v) $(VERSION_FLAGS) $(IMPORT_PATH)

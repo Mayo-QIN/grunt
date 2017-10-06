@@ -38,7 +38,7 @@ type Config struct {
 	ConfigDirectory      string              `json:"config_directory" yaml:"configDirectory"`
 	WarnLevel            int                 `json:"warn_level" yaml:"warnLevel"`
 	CriticalLevel        int                 `json:"critical_level" yaml:"criticalLevel"`
-	CleanupTimeInMinutes int                 `json:"cleanup_time_in_minutes"`
+	CleanupTimeInMinutes int                 `json:"cleanup_time_in_minutes" yaml:"cleanupTimeInMinutes"`
 }
 
 var config Config
@@ -151,6 +151,8 @@ func main() {
 	// Register the main grunt services
 	c := ConfigD{Name: config.Name, Services: config.Services}
 	registerConfigWithConsul(&c)
+
+	log.Printf("Finished jobs will cleanup %d minutes after completion", config.CleanupTimeInMinutes)
 
 	log.Printf("Starting grunt on http://localhost:%v", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
