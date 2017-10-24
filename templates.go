@@ -27,7 +27,7 @@ var funcs = template.FuncMap{
 		return string(a), nil
 	},
 	"humanizeTime": humanize.Time,
-	"now":          time.Now,
+	"now":          func() string { return time.Now().Format(time.RFC1123) },
 	"isArray":      func(s string) bool { return strings.HasPrefix(s, "[") && strings.HasSuffix(s, "]") },
 	"toArray": func(s string) []string {
 		v := strings.TrimPrefix(s, "[")

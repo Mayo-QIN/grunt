@@ -77,7 +77,6 @@ services:
     description: print a message
     defaults:
       Message: "Hi From Grunt"
-      Message2: {Hi From Grunt, Bye from Grunt}
   - endPoint: sleep
     commandLine: ["sleep", "#seconds"]
     description: Sleep for a while

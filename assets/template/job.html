@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" xml:lang="en" xmlns= "http://www.w3.org/1999/xhtml">
   <head>
     <title>grunt {{.job.UUID}}</title>
     <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
@@ -70,24 +71,27 @@
         <div class="col-sm-8"><a href="/rest/job/{{.UUID}}">status</a></div>
       </div>
 
-      <div class="row collapse" id="all">
-        <div class="col-sm-4">All job data</div>
-        <div class="col-sm-8"><a href="/rest/job/{{.UUID}}/zip">download</a></div>
-      </div>
-
-      <div class="row">
+      <div class="row collapse" id="output_files">
+        <!-- <div class="row collapse" id="all">
+             <div class="col-sm-4">All job data</div>
+             <div class="col-sm-8"><a href="/rest/job/{{.UUID}}/zip">download</a></div>
+             </div>
+           -->
         <table class="table table-striped">
           <thead>
             <tr>
               <th>Output files</th>
-              <th>Click the link below once the job is finished with status success to download the output data</th>
+              <!-- <th>Click the link below once the job is finished with status success to download the output data</th> -->
             </tr>
           </thead>
           <tbody>
+            <tr>
+              <td><a href="/rest/job/{{.UUID}}/zip">all job data</a></td>
+            </tr>
             {{$uuid := .UUID}}
             {{range $key, $value := .FileMap}}
             <tr>
-              <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</td>
+              <td><a href="/rest/job/{{$uuid}}/file/{{$key}}">{{$key}}</a></td>
             </tr>
             {{end}}
             {{range $key, $value := .ZipMap}}
@@ -120,6 +124,7 @@
 
   <script type="text/javascript">
 
+  $('#output_files').hide();
   function refresh() {
     axios.get("/rest/job/{{.job.UUID}}")
          .then(function(response) {
@@ -132,16 +137,19 @@
              $('#status').addClass('text-success');
              $('#start').text(response.data.start_time_full);
              $('#end').text(response.data.end_time_full);
+             $('#output_files').show("slow");
            }
            if ( response.data.status == "failed") {
              $('#status').addClass('text-danger');
              $('#start').text(response.data.start_time_full);
              $('#end').text(response.data.end_time_full);
+             $('#output_files').show("slow");
            }
            if ( response.data.status == "running") {
              $('#status').addClass('text-info');
              $('#start').text(response.data.start_time_humanized);
              $('#end').text(response.data.end_time_humanized);
+             $('#output_files').hide();
            }
 
 
