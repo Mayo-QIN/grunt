@@ -44,7 +44,7 @@
           <div class="col-sm-4">command line</div>
           <div class="col-sm-8">{{range .CommandLine}}{{.}} {{end}}</div>
         </div>
-        
+
         <div class="row collapse" id="description-C61194C4-5B08-43E8-841D-4F651F59516B">
           <div class="col-sm-4">description</div>
           <div class="col-sm-8">{{ markdown .Description }}</div>
@@ -57,12 +57,12 @@
           </div>
 
         <script type="text/javascript">
-        
+
         var t = document.getElementById('curl-command');
         t.innerHTML = "curl -X POST {{ range $p := .Parameters}} --form {{ $p }}=\"{{index $d $p}}\"{{end}}" +
                       "{{ range $p := .InputFiles }} --form {{$p}}=@FILENAME {{end}}" +
                       "{{ range $p := .OutputFiles }} --form {{$p}}=output.FILENAME {{end}}" +
-                      "{{ range $p := .InputZip }} --form {{$p}}=@FILENAME.zip {{end}}" + 
+                      "{{ range $p := .InputZip }} --form {{$p}}=@FILENAME.zip {{end}}" +
                       "{{ range $p := .OutputZip }} --form {{$p}}=output.zip {{end}}" +
                       " " + window.location.hostname + ":" + window.location.port + "/rest/service/{{.EndPoint}}";
 
@@ -70,9 +70,8 @@
       </div>
 
       <div class="row">
-        <h3>Start service interactively</h3>
+        <h3>Select paremeters</h3>
         <form name="service" method="post" enctype="multipart/form-data">
-
           {{ if $c.Mail.Server }}
           <div class="panel panel-default">
             <div class="panel-body">
@@ -83,12 +82,12 @@
               </div>
             </div>
             {{end}}
-            
+
                 {{$parameter_descriptions := .ParameterDescriptions}}
                 {{ if .Parameters }}
                 <div class="panel panel-default">
                   <div class="panel-heading">
-                    Command line parameters for <code>{{.EndPoint}}</code>.  Typically these are strings or numbers.
+                    Use the dropdown menu to select parameters for <code>{{.EndPoint}}</code>.  Typically these are strings or numbers.
                   </div>
                   <div class="panel-body">
                     {{ range $p := .Parameters}}
@@ -119,7 +118,7 @@
                       });
                       </script>
 
-                
+
                 {{else}}
                 <input class="form-control" id="{{$p}}" placeholder="{{index $d $p}}" value="{{index $d $p}}" type="text" name="{{$p}}">
                 {{end}}
@@ -160,7 +159,7 @@
             </div>
           </div>
           {{end}}
-          
+
           {{ if .OutputFiles }}
           <div class="panel panel-default">
             <div class="panel-heading">
@@ -201,7 +200,7 @@
     {{end}}
 
     <script type="text/javascript">
-    
+
     var form = document.forms.namedItem("service");
     form.addEventListener('submit', function(ev) {
 
@@ -210,14 +209,14 @@
       // Wait a full minute for timeout
       axios.defaults.timeout = 60 * 1000;
       oOutput.innerHTML = '<br/><div class="alert alert-success">Starting service, please wait for upload...</div>';
-      
+
       axios.post("/rest/service/{{.service.EndPoint}}", oData)
            .then(function(response) {
              console.log(response);
 
              window.open ( '/job/' + response.data.uuid, "_self" );
              return;
-             
+
              /* oOutput.innerHTML =
               *   '<br/><div class="alert alert-success">Service started see <a href="/job/' + response.data.uuid + '">job status</a></div>' +
               *   "<pre>" + JSON.stringify(response.data,null,4) + "</pre>";
@@ -226,14 +225,14 @@
               * oOutput.innerHTML = "<h3>Error</h3><br/>" +
               *                     '<div class="alert alert-info">' +
               *                     error + '</div><div class="alert alert-warning">' + error.response.data + '</div>'*/
-             
+
            });
       ev.preventDefault();
     }, false);
 
-    
 
-    
+
+
     </script>
   </body>
 </html>
