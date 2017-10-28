@@ -37,7 +37,7 @@ type asset struct {
 
 // templateEmailTxt reads file data from disk. It returns an error on failure.
 func templateEmailTxt() (*asset, error) {
-	path := "/Users/m112447/Drive/grunt/assets/template/email.txt"
+	path := "/Users/blezek/Source/grunt/assets/template/email.txt"
 	name := "template/email.txt"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -55,7 +55,7 @@ func templateEmailTxt() (*asset, error) {
 
 // templateGruntHtml reads file data from disk. It returns an error on failure.
 func templateGruntHtml() (*asset, error) {
-	path := "/Users/m112447/Drive/grunt/assets/template/grunt.html"
+	path := "/Users/blezek/Source/grunt/assets/template/grunt.html"
 	name := "template/grunt.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -73,7 +73,7 @@ func templateGruntHtml() (*asset, error) {
 
 // templateHeaderHtml reads file data from disk. It returns an error on failure.
 func templateHeaderHtml() (*asset, error) {
-	path := "/Users/m112447/Drive/grunt/assets/template/header.html"
+	path := "/Users/blezek/Source/grunt/assets/template/header.html"
 	name := "template/header.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -91,7 +91,7 @@ func templateHeaderHtml() (*asset, error) {
 
 // templateHelpHtml reads file data from disk. It returns an error on failure.
 func templateHelpHtml() (*asset, error) {
-	path := "/Users/m112447/Drive/grunt/assets/template/help.html"
+	path := "/Users/blezek/Source/grunt/assets/template/help.html"
 	name := "template/help.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -109,7 +109,7 @@ func templateHelpHtml() (*asset, error) {
 
 // templateJobHtml reads file data from disk. It returns an error on failure.
 func templateJobHtml() (*asset, error) {
-	path := "/Users/m112447/Drive/grunt/assets/template/job.html"
+	path := "/Users/blezek/Source/grunt/assets/template/job.html"
 	name := "template/job.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -127,7 +127,7 @@ func templateJobHtml() (*asset, error) {
 
 // templateJobsHtml reads file data from disk. It returns an error on failure.
 func templateJobsHtml() (*asset, error) {
-	path := "/Users/m112447/Drive/grunt/assets/template/jobs.html"
+	path := "/Users/blezek/Source/grunt/assets/template/jobs.html"
 	name := "template/jobs.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -145,7 +145,7 @@ func templateJobsHtml() (*asset, error) {
 
 // templateServiceHtml reads file data from disk. It returns an error on failure.
 func templateServiceHtml() (*asset, error) {
-	path := "/Users/m112447/Drive/grunt/assets/template/service.html"
+	path := "/Users/blezek/Source/grunt/assets/template/service.html"
 	name := "template/service.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -163,7 +163,7 @@ func templateServiceHtml() (*asset, error) {
 
 // templateServicesHtml reads file data from disk. It returns an error on failure.
 func templateServicesHtml() (*asset, error) {
-	path := "/Users/m112447/Drive/grunt/assets/template/services.html"
+	path := "/Users/blezek/Source/grunt/assets/template/services.html"
 	name := "template/services.html"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
@@ -181,7 +181,7 @@ func templateServicesHtml() (*asset, error) {
 
 // readmeMdReadmeMd reads file data from disk. It returns an error on failure.
 func readmeMdReadmeMd() (*asset, error) {
-	path := "/Users/m112447/Drive/grunt/README.md"
+	path := "/Users/blezek/Source/grunt/README.md"
 	name := "README.md/README.md"
 	bytes, err := bindataRead(path, name)
 	if err != nil {
